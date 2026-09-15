@@ -47,7 +47,7 @@
                         </path>
                     </svg>
                     <span class="leading-tight">Dashboard<br><span
-                            class="text-xs {{ request()->routeIs('admin.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal">Coordinador</span></span>
+                            class="text-xs {{ request()->routeIs('admin.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal"></span></span>
                 </a>
 
                 <a href="#"
