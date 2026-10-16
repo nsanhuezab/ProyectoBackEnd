@@ -45,8 +45,16 @@
 
             <!-- Top Action Bar -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div class="text-xs text-slate-500 font-medium">
-                    Mostrando <span id="recordCount" class="font-bold text-slate-800">0</span> registros
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                    <input type="search" id="searchInput" placeholder="Buscar..." oninput="onSearchInput(this.value)"
+                        class="w-full sm:w-64 border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-slate-900 bg-white">
+                    <select id="perPageSelect" onchange="changePerPage(this.value)"
+                        class="border border-slate-300 rounded-lg py-2 px-2 text-xs bg-white outline-none">
+                        <option value="5">5 por página</option>
+                        <option value="10" selected>10 por página</option>
+                        <option value="25">25 por página</option>
+                        <option value="50">50 por página</option>
+                    </select>
                 </div>
 
                 <!-- Add Record Button -->
@@ -80,6 +88,17 @@
                 <p class="text-xs text-slate-400 mt-1">Prueba cambiando el término de búsqueda o agrega un nuevo registro.</p>
             </div>
 
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+                <div class="text-xs text-slate-500 font-medium" id="recordInfo">Cargando...</div>
+                <div class="flex items-center space-x-2">
+                    <button id="prevBtn" onclick="goToPage(state.page - 1)"
+                        class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
+                    <span class="text-xs text-slate-600 font-medium" id="pageInfo">1 / 1</span>
+                    <button id="nextBtn" onclick="goToPage(state.page + 1)"
+                        class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -107,14 +126,16 @@
                     <!-- Los inputs del formulario cambian según Carreras, Ofertas o Coordinadores -->
                 </div>
 
+                <div id="formError" class="hidden text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3"></div>
+
                 <!-- Buttons Footer -->
                 <div class="pt-4 flex items-center justify-end space-x-2 border-t border-slate-100">
                     <button type="button" onclick="closeModal()"
                         class="px-4 py-2 border border-slate-300 text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors">
                         Cancelar
                     </button>
-                    <button type="submit"
-                        class="px-4 py-2 bg-[#C8102E] hover:bg-[#9e0b22] text-white text-xs font-semibold rounded-lg shadow transition-colors">
+                    <button type="submit" id="submitBtn"
+                        class="px-4 py-2 bg-[#C8102E] hover:bg-[#9e0b22] text-white text-xs font-semibold rounded-lg shadow transition-colors disabled:opacity-60">
                         Guardar Registro
                     </button>
                 </div>
@@ -147,206 +168,317 @@
     </div>
 
     <script>
-        // Fuentes de datos para cada sección
-        let currentSection = 'Carreras';
-        let deleteTargetId = null;
+        const CSRF = @json(csrf_token());
 
-        let datasets = {
-            'Carreras': [
-                { id: 3, nombre: 'Ingeniería Comercial', codigo: 'ICOM', supervisor: 55.00, coordinador: 45.00, activa: true },
-                { id: 2, nombre: 'Ingeniería Civil Industrial', codigo: 'ICI2', supervisor: 50.00, coordinador: 50.00, activa: true },
-                { id: 1, nombre: 'Ingeniería Civil Informática', codigo: 'ICI', supervisor: 60.00, coordinador: 40.00, activa: true }
-            ],
-            'Ofertas': [
-                { id: 1, titulo: 'Desarrollador Backend Laravel', empresa: 'Tech Solutions SpA', vacantes: 3, estado: 'Disponible' },
-                { id: 2, titulo: 'Analista de Datos Jr', empresa: 'Banco de Concepción', vacantes: 1, estado: 'Disponible' }
-            ],
-            'Coordinadores': [
-                { id: 1, nombre: 'Roberto Soto', correo: 'rsoto@ucsc.cl', carrera: 'Ingeniería Civil Informática', telefono: '+56912345678' },
-                { id: 2, nombre: 'Claudia Valenzuela', correo: 'cvalenzuela@ucsc.cl', carrera: 'Ingeniería Comercial', telefono: '+56987654321' }
-            ]
+        const INPUT_CLASS = 'w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600';
+        const LABEL_CLASS = 'block text-xs font-semibold text-slate-700 mb-1';
+
+        const state = {
+            section: 'Carreras',
+            page: 1,
+            perPage: 10,
+            search: '',
+            sort: null,
+            dir: 'asc',
+            rows: [],
+            lastPage: 1,
+        };
+        let deleteTargetId = null;
+        let careerOptions = [];
+        let searchTimer = null;
+        let requestSeq = 0;
+
+        const sections = {
+            Carreras: {
+                url: '/admin/careers',
+                singular: 'Carrera',
+                columns: [
+                    { key: 'id', label: 'ID', sortable: true, render: i => `<span class="font-mono font-semibold text-slate-600">${i.id}</span>` },
+                    { key: 'nombre', label: 'Nombre', sortable: true, render: i => `<span class="font-semibold text-slate-800">${escapeHtml(i.nombre)}</span>` },
+                    { key: 'codigo', label: 'Código', sortable: true, render: i => `<span class="font-mono text-slate-600 uppercase">${escapeHtml(i.codigo)}</span>` },
+                    { key: 'supervisor', label: '% Supervisor', sortable: true, center: true, render: i => `<span class="font-mono">${Number(i.supervisor).toFixed(2)}</span>` },
+                    { key: 'coordinador', label: '% Coordinador', sortable: true, center: true, render: i => `<span class="font-mono">${Number(i.coordinador).toFixed(2)}</span>` },
+                    { key: 'activa', label: 'Activa', sortable: true, center: true, render: i => i.activa
+                        ? '<span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold">Activa</span>'
+                        : '<span class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full text-[10px]">Inactiva</span>' },
+                ],
+                fields: item => `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="${LABEL_CLASS}">Nombre de la Carrera *</label>
+                            <input type="text" id="nombreInput" required value="${escapeHtml(item ? item.nombre : '')}" class="${INPUT_CLASS}">
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Código Carrera *</label>
+                            <input type="text" id="codigoInput" required value="${escapeHtml(item ? item.codigo : '')}" class="${INPUT_CLASS} uppercase">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="${LABEL_CLASS}">% Supervisor</label>
+                                <input type="number" id="supervisorInput" step="0.01" min="0" max="100" required value="${item ? item.supervisor : 50}" class="${INPUT_CLASS}">
+                            </div>
+                            <div>
+                                <label class="${LABEL_CLASS}">% Coordinador</label>
+                                <input type="number" id="coordinadorInput" step="0.01" min="0" max="100" required value="${item ? item.coordinador : 50}" class="${INPUT_CLASS}">
+                            </div>
+                        </div>
+                        <div class="pt-2 flex items-center justify-between border-t border-slate-100">
+                            <span class="text-xs font-semibold text-slate-700">Estado Activo</span>
+                            <input type="checkbox" id="activaInput" ${!item || item.activa ? 'checked' : ''} class="w-4 h-4 accent-red-600">
+                        </div>
+                    </div>`,
+                collect: () => ({
+                    nombre: val('nombreInput'),
+                    codigo: val('codigoInput'),
+                    supervisor: parseFloat(val('supervisorInput')),
+                    coordinador: parseFloat(val('coordinadorInput')),
+                    activa: document.getElementById('activaInput').checked,
+                }),
+            },
+
+            Ofertas: {
+                url: '/admin/offers',
+                singular: 'Oferta',
+                columns: [
+                    { key: 'id', label: 'ID', sortable: true, render: i => `<span class="font-mono font-semibold text-slate-600">${i.id}</span>` },
+                    { key: 'titulo', label: 'Título de oferta', sortable: true, render: i => `<span class="font-semibold text-slate-800">${escapeHtml(i.titulo)}</span>` },
+                    { key: 'empresa', label: 'Empresa', sortable: true, render: i => `<span class="text-slate-600">${escapeHtml(i.empresa)}</span>` },
+                    { key: 'vacantes', label: 'Vacantes', sortable: true, center: true, render: i => `<span class="font-mono">${i.vacantes}</span>` },
+                    { key: 'estado', label: 'Estado', sortable: true, center: true, render: i => `<span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-bold">${escapeHtml(i.estado)}</span>` },
+                ],
+                fields: item => `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="${LABEL_CLASS}">Título de la Oferta *</label>
+                            <input type="text" id="tituloInput" required value="${escapeHtml(item ? item.titulo : '')}" class="${INPUT_CLASS}">
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Empresa *</label>
+                            <input type="text" id="empresaInput" required value="${escapeHtml(item ? item.empresa : '')}" class="${INPUT_CLASS}">
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Vacantes *</label>
+                            <input type="number" id="vacantesInput" min="1" required value="${item ? item.vacantes : 1}" class="${INPUT_CLASS}">
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Estado</label>
+                            <select id="estadoInput" class="${INPUT_CLASS}">
+                                <option value="Disponible" ${item && item.estado === 'Disponible' ? 'selected' : ''}>Disponible</option>
+                                <option value="Cerrada" ${item && item.estado === 'Cerrada' ? 'selected' : ''}>Cerrada</option>
+                            </select>
+                        </div>
+                    </div>`,
+                collect: () => ({
+                    titulo: val('tituloInput'),
+                    empresa: val('empresaInput'),
+                    vacantes: parseInt(val('vacantesInput'), 10),
+                    estado: val('estadoInput'),
+                }),
+            },
+
+            Coordinadores: {
+                url: '/admin/coordinators',
+                singular: 'Coordinador',
+                columns: [
+                    { key: 'id', label: 'ID', sortable: true, render: i => `<span class="font-mono font-semibold text-slate-600">${i.id}</span>` },
+                    { key: 'nombre', label: 'Nombre', sortable: true, render: i => `<span class="font-semibold text-slate-800">${escapeHtml(i.nombre)}</span>` },
+                    { key: 'correo', label: 'Correo', sortable: true, render: i => `<span class="text-slate-600">${escapeHtml(i.correo)}</span>` },
+                    { key: 'carrera', label: 'Carrera asignada', sortable: true, render: i => `<span class="text-slate-600">${escapeHtml(i.carrera ?? '—')}</span>` },
+                    { key: 'telefono', label: 'Teléfono', sortable: true, render: i => `<span class="font-mono text-xs">${escapeHtml(i.telefono ?? '')}</span>` },
+                ],
+                fields: item => `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="${LABEL_CLASS}">Nombre Completo *</label>
+                            <input type="text" id="nombreCoordInput" required value="${escapeHtml(item ? item.nombre : '')}" class="${INPUT_CLASS}">
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Correo Electrónico *</label>
+                            <input type="email" id="correoInput" required value="${escapeHtml(item ? item.correo : '')}" class="${INPUT_CLASS}">
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Carrera Asignada *</label>
+                            <select id="careerInput" required class="${INPUT_CLASS}">
+                                <option value="">Selecciona una carrera</option>
+                                ${careerOptions.map(c => `<option value="${c.id}" ${item && item.career_id === c.id ? 'selected' : ''}>${escapeHtml(c.nombre)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="${LABEL_CLASS}">Teléfono</label>
+                            <input type="text" id="telefonoInput" value="${escapeHtml(item ? (item.telefono ?? '') : '')}" class="${INPUT_CLASS}">
+                        </div>
+                    </div>`,
+                collect: () => ({
+                    nombre: val('nombreCoordInput'),
+                    correo: val('correoInput'),
+                    career_id: parseInt(val('careerInput'), 10) || null,
+                    telefono: val('telefonoInput') || null,
+                }),
+                beforeOpen: async () => { careerOptions = await api('GET', '/admin/careers/options'); },
+            },
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            renderTable();
-        });
+        const cfg = () => sections[state.section];
 
-        function switchSection(section) {
-            currentSection = section;
-            document.getElementById('viewTitle').textContent = section;
-            renderTable();
-            showToast('Vista Cambiada', `Mostrando listado de ${section}.`, 'info');
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        function val(id) { return document.getElementById(id).value.trim(); }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
-        function renderTable() {
+        async function api(method, url, body) {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: body !== undefined ? JSON.stringify(body) : undefined,
+            });
+            if (res.status === 204) return null;
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const err = new Error(data.message || 'Ocurrió un error inesperado.');
+                err.status = res.status;
+                err.errors = data.errors || {};
+                throw err;
+            }
+            return data;
+        }
+
+        async function loadData() {
+            const mySeq = ++requestSeq;
+            const params = new URLSearchParams({
+                page: state.page,
+                per_page: state.perPage,
+                search: state.search,
+            });
+            if (state.sort) {
+                params.set('sort', state.sort);
+                params.set('dir', state.dir);
+            }
+
+            try {
+                const res = await api('GET', `${cfg().url}?${params}`);
+                if (mySeq !== requestSeq) return;
+
+                if (res.data.length === 0 && res.meta.page > 1) {
+                    state.page = res.meta.last_page || 1;
+                    return loadData();
+                }
+
+                state.rows = res.data;
+                state.lastPage = res.meta.last_page;
+                renderTable(res.meta);
+            } catch (e) {
+                showToast('Error', e.message, 'error');
+            }
+        }
+
+        function renderTable(meta) {
+            const { columns } = cfg();
             const thead = document.getElementById('tableHeader');
             const tbody = document.getElementById('dataTableBody');
             const emptyState = document.getElementById('emptyState');
-            const recordCount = document.getElementById('recordCount');
-            const data = datasets[currentSection];
 
-            recordCount.textContent = data.length;
+            thead.innerHTML = columns.map(col => {
+                const align = col.center ? 'text-center' : '';
+                if (!col.sortable) return `<th class="py-3 px-4 ${align}">${col.label}</th>`;
+                const arrow = state.sort === col.key ? (state.dir === 'asc' ? ' ▲' : ' ▼') : '';
+                return `<th class="py-3 px-4 ${align} cursor-pointer select-none hover:text-slate-800" onclick="sortBy('${col.key}')">${col.label}${arrow}</th>`;
+            }).join('') + '<th class="py-3 px-4 text-center">Acciones</th>';
 
-            if (data.length === 0) {
-                thead.innerHTML = '';
-                tbody.innerHTML = '';
-                emptyState.classList.remove('hidden');
+            tbody.innerHTML = state.rows.map(item => `
+                <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+                    ${columns.map(col => `<td class="py-3 px-4 ${col.center ? 'text-center' : ''}">${col.render(item)}</td>`).join('')}
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="openModal('edit', ${item.id})" class="px-2.5 py-1 text-xs border border-slate-400 text-slate-700 bg-white font-semibold rounded hover:bg-slate-100">Editar</button>
+                        <button onclick="openDeleteModal(${item.id})" class="px-2.5 py-1 text-xs border border-red-300 text-red-600 bg-white font-semibold rounded hover:bg-red-50 ml-1">Eliminar</button>
+                    </td>
+                </tr>`).join('');
+
+            emptyState.classList.toggle('hidden', state.rows.length > 0);
+
+            document.getElementById('recordInfo').innerHTML = meta.filtered === 0
+                ? 'Mostrando <span class="font-bold text-slate-800">0</span> registros'
+                : `Mostrando <span class="font-bold text-slate-800">${meta.from}–${meta.to}</span> de <span class="font-bold text-slate-800">${meta.filtered}</span> registros`
+                  + (meta.filtered !== meta.total ? ` (filtrados de ${meta.total})` : '');
+
+            document.getElementById('pageInfo').textContent = `${meta.page} / ${meta.last_page}`;
+            document.getElementById('prevBtn').disabled = meta.page <= 1;
+            document.getElementById('nextBtn').disabled = meta.page >= meta.last_page;
+        }
+
+        function switchSection(section) {
+            state.section = section;
+            state.page = 1;
+            state.sort = null;
+            state.dir = 'asc';
+            state.search = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('viewTitle').textContent = section;
+            loadData();
+        }
+
+        function onSearchInput(value) {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                state.search = value.trim();
+                state.page = 1;
+                loadData();
+            }, 300);
+        }
+
+        function changePerPage(value) {
+            state.perPage = parseInt(value, 10);
+            state.page = 1;
+            loadData();
+        }
+
+        function sortBy(key) {
+            if (state.sort === key) {
+                state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sort = key;
+                state.dir = 'asc';
+            }
+            state.page = 1;
+            loadData();
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > state.lastPage) return;
+            state.page = page;
+            loadData();
+        }
+
+        async function openModal(mode, id = null) {
+            const c = cfg();
+            try {
+                if (c.beforeOpen) await c.beforeOpen();
+            } catch (e) {
+                showToast('Error', e.message, 'error');
                 return;
             }
 
-            emptyState.classList.add('hidden');
-
-            if (currentSection === 'Carreras') {
-                thead.innerHTML = `
-                    <th class="py-3 px-4">ID</th>
-                    <th class="py-3 px-4">NOMBRE</th>
-                    <th class="py-3 px-4">CÓDIGO</th>
-                    <th class="py-3 px-4 text-center">% SUPERVISOR</th>
-                    <th class="py-3 px-4 text-center">% COORDINADOR</th>
-                    <th class="py-3 px-4 text-center">ACTIVA</th>
-                    <th class="py-3 px-4 text-center">ACCIONES</th>
-                `;
-                tbody.innerHTML = data.map(item => `
-                    <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
-                        <td class="py-3 px-4 font-mono font-semibold text-slate-600">${item.id}</td>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.nombre)}</td>
-                        <td class="py-3 px-4 font-mono text-slate-600 uppercase">${escapeHtml(item.codigo)}</td>
-                        <td class="py-3 px-4 text-center font-mono">${item.supervisor.toFixed(2)}</td>
-                        <td class="py-3 px-4 text-center font-mono">${item.coordinador.toFixed(2)}</td>
-                        <td class="py-3 px-4 text-center">
-                            ${item.activa ? '<span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold">Activa</span>' : '<span class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full text-[10px]">Inactiva</span>'}
-                        </td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="openModal('edit', ${item.id})" class="px-2.5 py-1 text-xs border border-slate-400 text-slate-700 bg-white font-semibold rounded hover:bg-slate-100">Editar</button>
-                            <button onclick="openDeleteModal(${item.id})" class="px-2.5 py-1 text-xs border border-red-300 text-red-600 bg-white font-semibold rounded hover:bg-red-50 ml-1">Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } else if (currentSection === 'Ofertas') {
-                thead.innerHTML = `
-                    <th class="py-3 px-4">ID</th>
-                    <th class="py-3 px-4">TÍTULO DE OFERTA</th>
-                    <th class="py-3 px-4">EMPRESA</th>
-                    <th class="py-3 px-4 text-center">VACANTES</th>
-                    <th class="py-3 px-4 text-center">ESTADO</th>
-                    <th class="py-3 px-4 text-center">ACCIONES</th>
-                `;
-                tbody.innerHTML = data.map(item => `
-                    <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
-                        <td class="py-3 px-4 font-mono font-semibold text-slate-600">${item.id}</td>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.titulo)}</td>
-                        <td class="py-3 px-4 text-slate-600">${escapeHtml(item.empresa)}</td>
-                        <td class="py-3 px-4 text-center font-mono">${item.vacantes}</td>
-                        <td class="py-3 px-4 text-center"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-[10px] font-bold">${item.estado}</span></td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="openModal('edit', ${item.id})" class="px-2.5 py-1 text-xs border border-slate-400 text-slate-700 bg-white font-semibold rounded hover:bg-slate-100">Editar</button>
-                            <button onclick="openDeleteModal(${item.id})" class="px-2.5 py-1 text-xs border border-red-300 text-red-600 bg-white font-semibold rounded hover:bg-red-50 ml-1">Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } else if (currentSection === 'Coordinadores') {
-                thead.innerHTML = `
-                    <th class="py-3 px-4">ID</th>
-                    <th class="py-3 px-4">NOMBRE</th>
-                    <th class="py-3 px-4">CORREO</th>
-                    <th class="py-3 px-4">CARRERA ASIGNADA</th>
-                    <th class="py-3 px-4">TELÉFONO</th>
-                    <th class="py-3 px-4 text-center">ACCIONES</th>
-                `;
-                tbody.innerHTML = data.map(item => `
-                    <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
-                        <td class="py-3 px-4 font-mono font-semibold text-slate-600">${item.id}</td>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(item.nombre)}</td>
-                        <td class="py-3 px-4 text-slate-600">${escapeHtml(item.correo)}</td>
-                        <td class="py-3 px-4 text-slate-600">${escapeHtml(item.carrera)}</td>
-                        <td class="py-3 px-4 font-mono text-xs">${escapeHtml(item.telefono)}</td>
-                        <td class="py-3 px-4 text-center">
-                            <button onclick="openModal('edit', ${item.id})" class="px-2.5 py-1 text-xs border border-slate-400 text-slate-700 bg-white font-semibold rounded hover:bg-slate-100">Editar</button>
-                            <button onclick="openDeleteModal(${item.id})" class="px-2.5 py-1 text-xs border border-red-300 text-red-600 bg-white font-semibold rounded hover:bg-red-50 ml-1">Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        function openModal(mode, id = null) {
             const modal = document.getElementById('crudModal');
             const modalContainer = document.getElementById('modalContainer');
-            const modalTitle = document.getElementById('modalTitle');
-            const fieldsContainer = document.getElementById('modalFieldsContainer');
 
-            modalTitle.innerHTML = `<i class="fa-solid ${mode === 'create' ? 'fa-plus-circle' : 'fa-pen-to-square'} mr-2"></i> ${mode === 'create' ? 'Agregar ' + currentSection.slice(0, -1) : 'Editar ' + currentSection.slice(0, -1)}`;
+            document.getElementById('modalTitle').innerHTML =
+                `<i class="fa-solid ${mode === 'create' ? 'fa-plus-circle' : 'fa-pen-to-square'} mr-2"></i> ${mode === 'create' ? 'Agregar' : 'Editar'} ${c.singular}`;
             document.getElementById('recordId').value = id !== null ? id : '';
+            hideFormError();
 
-            let item = mode === 'edit' ? datasets[currentSection].find(c => c.id === id) : null;
-
-            if (currentSection === 'Carreras') {
-                fieldsContainer.innerHTML = `
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre de la Carrera *</label>
-                        <input type="text" id="nombreInput" required value="${item ? item.nombre : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Código Carrera *</label>
-                        <input type="text" id="codigoInput" required value="${item ? item.codigo : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs uppercase outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">% Supervisor</label>
-                            <input type="number" id="supervisorInput" step="0.01" min="0" max="100" required value="${item ? item.supervisor : 50}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">% Coordinador</label>
-                            <input type="number" id="coordinadorInput" step="0.01" min="0" max="100" required value="${item ? item.coordinador : 50}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs">
-                        </div>
-                    </div>
-                    <div class="pt-2 flex items-center justify-between border-t border-slate-100">
-                        <span class="text-xs font-semibold text-slate-700">Estado Activo</span>
-                        <input type="checkbox" id="activaInput" ${!item || item.activa ? 'checked' : ''} class="w-4 h-4 accent-red-600">
-                    </div>
-                `;
-            } else if (currentSection === 'Ofertas') {
-                fieldsContainer.innerHTML = `
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Título de la Oferta *</label>
-                        <input type="text" id="tituloInput" required value="${item ? item.titulo : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Empresa *</label>
-                        <input type="text" id="empresaInput" required value="${item ? item.empresa : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Vacantes *</label>
-                        <input type="number" id="vacantesInput" min="1" required value="${item ? item.vacantes : 1}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Estado</label>
-                        <select id="estadoInput" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none">
-                            <option value="Disponible" ${item && item.estado === 'Disponible' ? 'selected' : ''}>Disponible</option>
-                            <option value="Cerrada" ${item && item.estado === 'Cerrada' ? 'selected' : ''}>Cerrada</option>
-                        </select>
-                    </div>
-                `;
-            } else if (currentSection === 'Coordinadores') {
-                fieldsContainer.innerHTML = `
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre Completo *</label>
-                        <input type="text" id="nombreCoordInput" required value="${item ? item.nombre : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Correo Electrónico *</label>
-                        <input type="email" id="correoInput" required value="${item ? item.correo : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Carrera Asignada *</label>
-                        <input type="text" id="carreraCoordInput" required value="${item ? item.carrera : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
-                        <input type="text" id="telefonoInput" value="${item ? item.telefono : ''}" class="w-full border border-slate-300 rounded-lg py-2 px-3 text-xs outline-none focus:ring-2 focus:ring-red-600">
-                    </div>
-                `;
-            }
+            const item = mode === 'edit' ? state.rows.find(r => r.id === id) : null;
+            document.getElementById('modalFieldsContainer').innerHTML = c.fields(item);
 
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -365,56 +497,41 @@
             setTimeout(() => modal.classList.add('hidden'), 200);
         }
 
-        function handleFormSubmit(e) {
+        function showFormError(err) {
+            const box = document.getElementById('formError');
+            const messages = Object.values(err.errors || {}).flat();
+            box.innerHTML = (messages.length ? messages : [err.message]).map(escapeHtml).join('<br>');
+            box.classList.remove('hidden');
+        }
+
+        function hideFormError() {
+            document.getElementById('formError').classList.add('hidden');
+        }
+
+        async function handleFormSubmit(e) {
             e.preventDefault();
+            hideFormError();
+
             const id = document.getElementById('recordId').value;
-            let dataList = datasets[currentSection];
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
 
-            if (currentSection === 'Carreras') {
-                const nombre = document.getElementById('nombreInput').value.trim();
-                const codigo = document.getElementById('codigoInput').value.trim();
-                const supervisor = parseFloat(document.getElementById('supervisorInput').value) || 0;
-                const coordinador = parseFloat(document.getElementById('coordinadorInput').value) || 0;
-                const activa = document.getElementById('activaInput').checked;
-
+            try {
+                const payload = cfg().collect();
                 if (id) {
-                    let index = dataList.findIndex(c => c.id === parseInt(id));
-                    dataList[index] = { id: parseInt(id), nombre, codigo, supervisor, coordinador, activa };
+                    await api('PUT', `${cfg().url}/${id}`, payload);
                 } else {
-                    const newId = dataList.length > 0 ? Math.max(...dataList.map(c => c.id)) + 1 : 1;
-                    dataList.unshift({ id: newId, nombre, codigo, supervisor, coordinador, activa });
+                    await api('POST', cfg().url, payload);
+                    state.page = 1;
                 }
-            } else if (currentSection === 'Ofertas') {
-                const titulo = document.getElementById('tituloInput').value.trim();
-                const empresa = document.getElementById('empresaInput').value.trim();
-                const vacantes = parseInt(document.getElementById('vacantesInput').value) || 1;
-                const estado = document.getElementById('estadoInput').value;
-
-                if (id) {
-                    let index = dataList.findIndex(c => c.id === parseInt(id));
-                    dataList[index] = { id: parseInt(id), titulo, empresa, vacantes, estado };
-                } else {
-                    const newId = dataList.length > 0 ? Math.max(...dataList.map(c => c.id)) + 1 : 1;
-                    dataList.unshift({ id: newId, titulo, empresa, vacantes, estado });
-                }
-            } else if (currentSection === 'Coordinadores') {
-                const nombre = document.getElementById('nombreCoordInput').value.trim();
-                const correo = document.getElementById('correoInput').value.trim();
-                const carrera = document.getElementById('carreraCoordInput').value.trim();
-                const telefono = document.getElementById('telefonoInput').value.trim();
-
-                if (id) {
-                    let index = dataList.findIndex(c => c.id === parseInt(id));
-                    dataList[index] = { id: parseInt(id), nombre, correo, carrera, telefono };
-                } else {
-                    const newId = dataList.length > 0 ? Math.max(...dataList.map(c => c.id)) + 1 : 1;
-                    dataList.unshift({ id: newId, nombre, correo, carrera, telefono });
-                }
+                closeModal();
+                await loadData();
+                showToast('¡Éxito!', 'Registro guardado correctamente.', 'success');
+            } catch (err) {
+                showFormError(err);
+            } finally {
+                btn.disabled = false;
             }
-
-            closeModal();
-            renderTable();
-            showToast('¡Éxito!', 'Registro guardado correctamente.', 'success');
         }
 
         function openDeleteModal(id) {
@@ -441,13 +558,17 @@
             }, 200);
         }
 
-        function confirmDelete() {
-            if (deleteTargetId !== null) {
-                datasets[currentSection] = datasets[currentSection].filter(c => c.id !== deleteTargetId);
-                renderTable();
-                showToast('Eliminado', 'El registro ha sido removido.', 'info');
-            }
+        async function confirmDelete() {
+            if (deleteTargetId === null) return;
+            const id = deleteTargetId;
             closeDeleteModal();
+            try {
+                await api('DELETE', `${cfg().url}/${id}`);
+                await loadData();
+                showToast('Eliminado', 'El registro ha sido removido.', 'info');
+            } catch (err) {
+                showToast('Error', err.message, 'error');
+            }
         }
 
         function showToast(title, message, type = 'success') {
@@ -455,29 +576,22 @@
             document.getElementById('toastTitle').textContent = title;
             document.getElementById('toastMessage').textContent = message;
             const toastIcon = document.getElementById('toastIcon');
-
-            if (type === 'success') {
-                toastIcon.className = 'w-8 h-8 rounded-full flex items-center justify-center text-white bg-emerald-500';
-                toastIcon.innerHTML = '<i class="fa-solid fa-check text-sm"></i>';
-            } else {
-                toastIcon.className = 'w-8 h-8 rounded-full flex items-center justify-center text-white bg-blue-500';
-                toastIcon.innerHTML = '<i class="fa-solid fa-info text-sm"></i>';
-            }
+            const styles = {
+                success: ['bg-emerald-500', 'fa-check'],
+                info: ['bg-blue-500', 'fa-info'],
+                error: ['bg-red-500', 'fa-xmark'],
+            };
+            const [bg, icon] = styles[type] || styles.info;
+            toastIcon.className = `w-8 h-8 rounded-full flex items-center justify-center text-white ${bg}`;
+            toastIcon.innerHTML = `<i class="fa-solid ${icon} text-sm"></i>`;
 
             toast.classList.remove('hidden');
-            setTimeout(() => dismissToast(), 3500);
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(dismissToast, 3500);
         }
 
         function dismissToast() {
             document.getElementById('toastNotification').classList.add('hidden');
-        }
-
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
         }
     </script>
 @endrole
