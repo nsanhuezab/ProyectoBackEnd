@@ -38,7 +38,7 @@
 
         <nav class="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
 
-            @role('Administrador')
+            <!-- a@role('Administrador') -->
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('admin.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.dashboard*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,19 +69,9 @@
                     </svg>
                     <span>Administración</span>
                 </a>
-            @endrole
+            <!-- a@endrole -->
 
-            @role('Coordinador')
-                <a href="#"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('coordinator.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('coordinator.dashboard*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Dashboard<br><span
-                            class="text-xs {{ request()->routeIs('coordinator.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal">Coordinador</span></span>
-                </a>
+            <!-- a@role('Coordinador') -->
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('coordinator.practices*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
@@ -92,18 +82,9 @@
                     </svg>
                     <span class="leading-tight">Gestión y Evaluación de Prácticas</span>
                 </a>
-            @endrole
+            <!--a@endrole -->
 
-            @role('Estudiante')
-                <a href="#"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.dashboard') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.dashboard') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
-                        </path>
-                    </svg>
-                    <span>Mi Dashboard</span>
-                </a>
+            <!-- a@role('Estudiante') -->
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
@@ -133,19 +114,9 @@
                     </svg>
                     <span>Seguimiento</span>
                 </a>
-            @endrole
+            <!--a@endrole -->
 
-            @role('Empresa')
-                <a href="#"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.dashboard*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Dashboard<br><span
-                            class="text-xs {{ request()->routeIs('company.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal">Empresa</span></span>
-                </a>
+            <!-- a@role('Empresa')-->
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
@@ -155,7 +126,7 @@
                     </svg>
                     <span>Publicar Oferta</span>
                 </a>
-            @endrole
+            <!--a@endrole -->
 
         </nav>
     </aside>
