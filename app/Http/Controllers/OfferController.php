@@ -71,7 +71,7 @@ class OfferController extends Controller
     public function store(OfferRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $company = $this->companyFor($request, $data['company_id']);
+        $company = $this->companyFor($request, $data['empresa_id']);
         $offer = DB::transaction(function () use ($request, $data, $company): Offer {
             $offer = Offer::create(array_merge(
                 Arr::except($data, ['career_ids', 'empresa']),
@@ -92,7 +92,7 @@ class OfferController extends Controller
     public function update(OfferRequest $request, Offer $offer): JsonResponse
     {
         $data = $request->validated();
-        $company = $this->companyFor($request, $data['company_id']);
+        $company = $this->companyFor($request, $data['empresa_id']);
         $this->authorizeOfferManagement($request, $offer);
 
         DB::transaction(function () use ($data, $company, $offer): void {
@@ -170,7 +170,7 @@ class OfferController extends Controller
             'id' => $o->id,
             'titulo' => $o->titulo,
             'empresa' => $o->empresa,
-            'company_id' => $o->company_id,
+            'empresa_id' => $o->empresa_id,
             'vacantes' => (int) $o->vacantes,
             'estado' => $o->estado,
             'area' => $o->area,

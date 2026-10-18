@@ -23,9 +23,9 @@ class ApplicationSeeder extends Seeder
             Application::updateOrCreate(
                 ['student_id' => $student->id, 'offer_id' => $offer->id],
                 [
-                    'estado' => 'Postulado',
+                    'status' => 'Postulado',
                     'cv_path' => $cvPath,
-                    'carta_motivacion' => 'Me interesa aportar mis habilidades al equipo y seguir desarrollandome profesionalmente.',
+                    'motivation' => 'Me interesa aportar mis habilidades al equipo y seguir desarrollandome profesionalmente.',
                     'matching_score' => $index === 0 ? 91.25 : 52.5,
                 ],
             );

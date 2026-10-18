@@ -15,7 +15,7 @@ class Offer extends Model
     protected $fillable = [
         'titulo',
         'empresa',
-        'company_id',
+        'empresa_id',
         'created_by',
         'approved_by',
         'vacantes',
@@ -43,7 +43,7 @@ class Offer extends Model
 
     public function company(): BelongsTo
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Company::class, 'empresa_id');
     }
 
     public function careers(): BelongsToMany

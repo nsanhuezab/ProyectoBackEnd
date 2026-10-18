@@ -27,13 +27,13 @@ class CompanyRequest extends FormRequest
         return [
             'owner_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'razon_social' => ['required', 'string', 'max:255'],
-            'rut' => ['required', 'string', 'max:12', Rule::unique('companies', 'rut')->ignore($company)],
+            'rut' => ['required', 'string', 'max:15', Rule::unique('companies', 'rut')->ignore($company)],
             'rubro' => ['required', 'string', 'max:120'],
             'direccion' => ['required', 'string', 'max:255'],
             'sitio_web' => ['nullable', 'url', 'max:255'],
             'contacto_nombre' => ['required', 'string', 'max:255'],
-            'contacto_correo' => ['required', 'email', 'max:255'],
-            'contacto_telefono' => ['required', 'string', 'max:30'],
+            'contacto_email' => ['required', 'email', 'max:255'],
+            'telefono' => ['nullable', 'string', 'max:30'],
         ];
     }
 }

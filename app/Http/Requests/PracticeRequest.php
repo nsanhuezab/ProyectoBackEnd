@@ -26,7 +26,6 @@ class PracticeRequest extends FormRequest
             'application_id' => [Rule::requiredIf($this->isMethod('POST')), 'nullable', 'integer', 'exists:applications,id'],
             'fecha_inicio' => ['nullable', 'date'],
             'fecha_termino' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
-            'contratado' => ['sometimes', 'boolean'],
         ];
     }
 }

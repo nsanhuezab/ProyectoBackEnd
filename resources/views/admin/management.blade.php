@@ -20,7 +20,7 @@
 
         <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div class="overflow-x-auto p-3 sm:p-5">
-                <table id="resourceTable" class="w-full text-left text-sm text-slate-700">
+                <table id="resourceTable" class="w-full min-w-[760px] whitespace-nowrap text-left text-sm text-slate-700">
                     <thead>
                         <tr>
                             @foreach ($config['columns'] as $column)
@@ -132,6 +132,10 @@
                     ...config.columns.map((column) => ({
                         ...column,
                         render: (value, type) => {
+                            if (column.data === 'activa') {
+                                const label = value ? 'Activa' : 'Inactiva';
+                                return type === 'display' ? label : value;
+                            }
                             const text = Array.isArray(value) ? value.join(', ') : (value ?? '');
                             return type === 'display' ? $.fn.dataTable.render.text().display(String(text)) : text;
                         },
@@ -148,11 +152,9 @@
                                 actions.push('<button type="button" data-action="reject" class="mr-2 text-amber-700 hover:underline">Rechazar</button>');
                             }
                             if (config.actions.includes('transition')) {
-                                const next = { Asignado: 'En Curso', 'En Curso': 'Informe Entregado', 'Informe Entregado': 'Evaluado', Evaluado: 'Finalizada' }[row.estado];
+                                const next = { Asignado: 'En Curso', 'En Curso': 'Informe Entregado', 'Informe Entregado': 'Finalizada' }[row.estado];
                                 if (next) actions.push(`<button type="button" data-action="transition" data-state="${next}" class="mr-2 text-emerald-700 hover:underline">${next}</button>`);
                             }
-                            if (config.actions.includes('tracking')) actions.push('<button type="button" data-action="tracking" class="mr-2 text-slate-700 hover:underline">Seguimiento</button>');
-                            if (config.actions.includes('evaluation') && ['Informe Entregado', 'Evaluado'].includes(row.estado)) actions.push('<button type="button" data-action="evaluation" class="mr-2 text-red-700 hover:underline">Evaluar</button>');
                             if (config.canDelete !== false) actions.push('<button type="button" data-action="delete" class="text-red-700 hover:underline">Eliminar</button>');
                             return `<div class="whitespace-nowrap">${actions.join('')}</div>`;
                         },
@@ -236,11 +238,6 @@
                     if (config.fields.length) showModal(row);
                     return;
                 }
-                if (action === 'tracking') {
-                    Swal.fire({ icon: 'info', title: 'Seguimiento', text: `${row.bitacoras_count} bitácoras y ${row.evaluaciones_count} evaluaciones registradas.` });
-                    return;
-                }
-
                 let url = `${config.apiUrl}/${id}`;
                 let method = 'DELETE';
                 let body;
@@ -263,17 +260,6 @@
                     const choice = await Swal.fire({ title: `Cambiar estado a ${this.dataset.state}?`, icon: 'question', showCancelButton: true, confirmButtonText: 'Continuar', cancelButtonText: 'Cancelar' });
                     if (!choice.isConfirmed) return;
                     url += '/transition'; method = 'POST'; body = JSON.stringify({ estado: this.dataset.state });
-                } else if (action === 'evaluation') {
-                    const choice = await Swal.fire({
-                        title: 'Evaluación de práctica', input: 'number', inputLabel: 'Calificación de 1 a 7',
-                        inputAttributes: { min: 1, max: 7, step: 0.1 },
-                        inputValidator: (value) => Number(value) >= 1 && Number(value) <= 7 ? undefined : 'Ingresa una nota entre 1 y 7.',
-                        showCancelButton: true, confirmButtonText: 'Guardar evaluación', cancelButtonText: 'Cancelar',
-                    });
-                    if (!choice.isConfirmed) return;
-                    url = `/practices/${id}/evaluations`;
-                    method = 'POST';
-                    body = JSON.stringify({ tipo: config.evaluatorType ?? 'coordinador', calificacion: Number(choice.value), competencias: [] });
                 } else {
                     const choice = await Swal.fire({ title: '¿Eliminar este registro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' });
                     if (!choice.isConfirmed) return;

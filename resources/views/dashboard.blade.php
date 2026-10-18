@@ -49,7 +49,7 @@
             </div>
 
             <div class="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-                <table id="usersTable" class="w-full border-collapse text-left">
+                <table id="usersTable" class="w-full min-w-[920px] whitespace-nowrap border-collapse text-left">
                     <thead>
                         <tr
                             class="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">

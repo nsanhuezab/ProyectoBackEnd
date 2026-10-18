@@ -19,14 +19,14 @@ class CompanySeeder extends Seeder
             [
                 'rut' => '76123456-7', 'razon_social' => 'Tech Solutions SpA', 'rubro' => 'Tecnología',
                 'direccion' => 'Avenida Paicaví 1234, Concepción', 'sitio_web' => 'https://techsolutions.example',
-                'contacto_nombre' => 'Camila Torres', 'contacto_correo' => 'camila@techsolutions.example',
-                'contacto_telefono' => '+56912345678',
+                'contacto_nombre' => 'Camila Torres', 'contacto_email' => 'camila@techsolutions.example',
+                'telefono' => '+56912345678',
             ],
             [
                 'rut' => '96987654-3', 'razon_social' => 'Banco de Concepción', 'rubro' => 'Servicios financieros',
                 'direccion' => 'Barros Arana 456, Concepción', 'sitio_web' => 'https://bancoconcepcion.example',
-                'contacto_nombre' => 'Matías Rojas', 'contacto_correo' => 'matias@bancoconcepcion.example',
-                'contacto_telefono' => '+56987654321',
+                'contacto_nombre' => 'Matías Rojas', 'contacto_email' => 'matias@bancoconcepcion.example',
+                'telefono' => '+56987654321',
             ],
         ] as $data) {
             Company::updateOrCreate(

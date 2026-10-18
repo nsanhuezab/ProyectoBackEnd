@@ -28,7 +28,7 @@
 
         <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div class="overflow-x-auto p-3 sm:p-5">
-                <table id="offersTable" class="w-full text-left text-sm text-slate-700">
+                <table id="offersTable" class="w-full min-w-[820px] whitespace-nowrap text-left text-sm text-slate-700">
                     <thead><tr>
                         <th>Oferta</th><th>Empresa</th><th>Carreras</th><th>Área</th><th>Modalidad</th>
                         <th>Duración</th><th>Ubicación</th><th>Cupos</th><th>Acción</th>

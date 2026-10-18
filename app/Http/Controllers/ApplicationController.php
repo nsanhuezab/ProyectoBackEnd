@@ -42,10 +42,10 @@ class ApplicationController extends Controller
         return $this->dataTableResponse(
             $request,
             $query,
-            searchable: ['estado', 'matching_score'],
+            searchable: ['status', 'matching_score'],
             sortable: [
                 'id' => 'id',
-                'estado' => 'estado',
+                'estado' => 'status',
                 'matching_score' => 'matching_score',
                 'created_at' => 'created_at',
             ],
@@ -84,9 +84,9 @@ class ApplicationController extends Controller
                 $application = Application::create([
                     'student_id' => $student->id,
                     'offer_id' => $offer->id,
-                    'estado' => 'Postulado',
+                    'status' => 'Postulado',
                     'cv_path' => $cvPath,
-                    'carta_motivacion' => $validated['carta_motivacion'],
+                    'motivation' => $validated['carta_motivacion'],
                     'matching_score' => $this->matchingScore($student, $offer),
                 ]);
 
@@ -107,11 +107,11 @@ class ApplicationController extends Controller
             $offer = Offer::query()->lockForUpdate()->findOrFail($application->offer_id);
             $this->authorizeReview($request, $application);
 
-            abort_unless($application->estado === 'Postulado', 409, 'Solo se pueden asignar postulaciones pendientes.');
+            abort_unless($application->status === 'Postulado', 409, 'Solo se pueden asignar postulaciones pendientes.');
             abort_if($offer->applications()->whereHas('practice')->count() >= $offer->vacantes, 409, 'La oferta ya completó sus cupos.');
 
             $application->update([
-                'estado' => 'Asignado',
+                'status' => 'Asignado',
                 'reviewed_by' => $request->user()->id,
                 'decision_at' => now(),
             ]);
@@ -129,9 +129,9 @@ class ApplicationController extends Controller
     public function reject(Request $request, Application $application): JsonResponse
     {
         $this->authorizeReview($request, $application);
-        abort_unless($application->estado === 'Postulado', 409, 'La postulación ya fue resuelta.');
+        abort_unless($application->status === 'Postulado', 409, 'La postulación ya fue resuelta.');
         $application->update([
-            'estado' => 'Rechazado',
+            'status' => 'Rechazado',
             'reviewed_by' => $request->user()->id,
             'decision_at' => now(),
         ]);
@@ -145,10 +145,10 @@ class ApplicationController extends Controller
         $validated = $request->validate([
             'estado' => ['required', Rule::in(['Postulado', 'Rechazado'])],
         ]);
-        abort_unless(in_array($application->estado, ['Postulado', 'Rechazado'], true), 409, 'La postulación ya fue asignada y no se puede editar.');
+        abort_unless(in_array($application->status, ['Postulado', 'Rechazado'], true), 409, 'La postulación ya fue asignada y no se puede editar.');
 
         $application->update([
-            'estado' => $validated['estado'],
+            'status' => $validated['estado'],
             'reviewed_by' => $validated['estado'] === 'Rechazado' ? $request->user()->id : null,
             'decision_at' => $validated['estado'] === 'Rechazado' ? now() : null,
         ]);
@@ -161,11 +161,13 @@ class ApplicationController extends Controller
         $user = $request->user();
         if ($user->hasRole('Estudiante')) {
             abort_unless($application->student()->where('user_id', $user->id)->exists(), 404);
-            abort_unless($application->estado === 'Postulado', 409, 'No puedes retirar una postulación ya asignada.');
+            abort_unless($application->status === 'Postulado', 409, 'No puedes retirar una postulación ya asignada.');
         } else {
             abort_unless($user->hasAnyRole(['Administrador', 'Super Administrador']), 403);
         }
-        Storage::disk('local')->delete($application->cv_path);
+        if ($application->cv_path) {
+            Storage::disk('local')->delete($application->cv_path);
+        }
         $application->delete();
 
         return response()->noContent();
@@ -173,6 +175,7 @@ class ApplicationController extends Controller
 
     public function cv(Request $request, Application $application): StreamedResponse
     {
+        abort_unless(filled($application->cv_path), 404);
         $user = $request->user();
         $ownsApplication = $application->student()->where('user_id', $user->id)->exists();
         $ownsCompany = $application->offer()->whereHas('company', fn (Builder $company) => $company->where('owner_user_id', $user->id))->exists();
@@ -220,9 +223,9 @@ class ApplicationController extends Controller
             'career' => $application->student?->career?->nombre ?? $application->student?->carrera,
             'offer' => $application->offer?->titulo,
             'company' => $application->offer?->company?->razon_social ?? $application->offer?->empresa,
-            'estado' => $application->estado,
+            'estado' => $application->status,
             'matching_score' => (float) $application->matching_score,
-            'cv_url' => route('applications.cv', $application),
+            'cv_url' => $application->cv_path ? route('applications.cv', $application) : null,
             'created_at' => $application->created_at?->toDateString(),
         ];
     }

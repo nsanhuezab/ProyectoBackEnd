@@ -91,7 +91,6 @@
                         {{ $label }}
                     </a>
                 @endforeach
-                <a href="{{ route('admin.reports.index') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Indicadores</a>
             @endif
 
             @if ((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Coordinador'))
@@ -99,29 +98,18 @@
                     class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Coordinador
                 </div>
-                <a href="{{ route('coordinator.management.index', 'applications') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'applications' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'applications' ? 'text-white' : 'text-slate-500' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Postulaciones</span>
-                </a>
-
-                <a href="{{ route('coordinator.management.index', 'practices') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'practices' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'practices' ? 'text-white' : 'text-slate-500' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Prácticas</span>
-                </a>
+                        <a href="{{ route('coordinator.management.index', 'applications') }}"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'applications' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'applications' ? 'text-white' : 'text-slate-500' }}"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                            <span class="leading-tight">Postulaciones</span>
+                        </a>
                 <a href="{{ route('coordinator.management.index', 'offers') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Aprobar ofertas</a>
-                <a href="{{ route('coordinator.reports.index') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Indicadores</a>
+                <a href="{{ route('coordinator.management.index', 'practices') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Prácticas</a>
             @endif
 
             @if ((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Estudiante'))
@@ -129,17 +117,6 @@
                     class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Estudiante
                 </div>
-                <a href="{{ route('student.tracking.view') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.tracking*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.tracking*') ? 'text-white' : 'text-slate-500' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
-                        </path>
-                    </svg>
-                    <span>Mi seguimiento</span>
-                </a>
-
                 <a href="{{ route('student.offers.view') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.offers*') ? 'text-white' : 'text-slate-500' }}"
@@ -149,7 +126,6 @@
                     </svg>
                     <span>Explorar Ofertas</span>
                 </a>
-
                 <a href="{{ route('student.applications.view') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.applications*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.applications*') ? 'text-white' : 'text-slate-500' }}"
@@ -158,18 +134,7 @@
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                         </path>
                     </svg>
-                    <span>Mis Postulaciones</span>
-                </a>
-
-                <a href="{{ route('student.applications.view') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.tracking*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.tracking*') ? 'text-white' : 'text-slate-500' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                        </path>
-                    </svg>
-                    <span>Seguimiento</span>
+                    <span>Mis postulaciones</span>
                 </a>
             @endif
 
@@ -178,17 +143,6 @@
                     class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Empresa
                 </div>
-                <a href="{{ route('company.practices.view') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.practices*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.practices*') ? 'text-white' : 'text-slate-500' }}"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                        </path>
-                    </svg>
-                        <span class="leading-tight">Prácticas supervisadas</span>
-                </a>
-
                 <a href="{{ route('company.offers.view') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.offers*') ? 'text-white' : 'text-slate-500' }}"

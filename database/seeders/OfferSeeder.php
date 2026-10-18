@@ -40,7 +40,7 @@ class OfferSeeder extends Seeder
             $offer = Offer::updateOrCreate(
                 ['titulo' => $data['titulo']],
                 [
-                    'company_id' => $data['company']->id,
+                    'empresa_id' => $data['company']->id,
                     'empresa' => $data['company']->razon_social,
                     'created_by' => $creator->id,
                     'vacantes' => $data['vacantes'],

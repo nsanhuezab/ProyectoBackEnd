@@ -30,7 +30,7 @@ class ManagementPageController extends Controller
             ->mapWithKeys(fn (User $user) => [$user->id => $user->name.' ('.$user->email.')']);
         $pendingApplicationsQuery = Application::query()
             ->with(['student.user:id,name,last_name', 'offer:id,titulo'])
-            ->where('estado', 'Postulado');
+            ->where('status', 'Postulado');
         if ($request->user()?->hasRole('Coordinador')) {
             $pendingApplicationsQuery->whereHas('student', fn ($student) => $student->where('career_id', $request->user()->career_id));
         }
@@ -73,13 +73,13 @@ class ManagementPageController extends Controller
             'companies' => [
                 'title' => 'Empresas',
                 'description' => 'Mantén el registro institucional y el contacto supervisor.',
-                'columns' => $this->columns(['razon_social' => 'Razón social', 'rut' => 'RUT', 'rubro' => 'Rubro', 'contacto_nombre' => 'Contacto', 'contacto_correo' => 'Correo', 'contacto_telefono' => 'Teléfono']),
+                'columns' => $this->columns(['razon_social' => 'Razón social', 'rut' => 'RUT', 'rubro' => 'Rubro', 'contacto_nombre' => 'Contacto', 'contacto_email' => 'Correo', 'telefono' => 'Teléfono']),
                 'fields' => [
                     $this->selectField('owner_user_id', 'Cuenta de empresa', $companyUsers, false),
                     $this->field('razon_social', 'Razón social'), $this->field('rut', 'RUT'),
                     $this->field('rubro', 'Rubro'), $this->field('direccion', 'Dirección'),
                     $this->field('sitio_web', 'Sitio web', 'url'), $this->field('contacto_nombre', 'Supervisor de práctica'),
-                    $this->field('contacto_correo', 'Correo del supervisor', 'email'), $this->field('contacto_telefono', 'Teléfono del supervisor'),
+                    $this->field('contacto_email', 'Correo del supervisor', 'email'), $this->field('telefono', 'Teléfono del supervisor'),
                 ],
             ],
             'offers' => [
@@ -87,7 +87,7 @@ class ManagementPageController extends Controller
                 'description' => 'Administra ofertas y aprueba su publicación para estudiantes.',
                 'columns' => $this->columns(['titulo' => 'Oferta', 'empresa' => 'Empresa', 'carreras' => 'Carreras', 'area' => 'Área', 'modalidad' => 'Modalidad', 'vacantes' => 'Cupos', 'estado' => 'Estado']),
                 'fields' => [
-                    $this->field('titulo', 'Título'), $this->selectField('company_id', 'Empresa', $companyOptions),
+                    $this->field('titulo', 'Título'), $this->selectField('empresa_id', 'Empresa', $companyOptions),
                     $this->selectField('career_ids', 'Carreras requeridas', $careerOptions, true),
                     $this->field('area', 'Área'), $this->field('perfil', 'Perfil requerido', 'textarea'),
                     $this->field('nivel_requerido', 'Nivel requerido'),
@@ -111,29 +111,22 @@ class ManagementPageController extends Controller
             ],
             'practices' => [
                 'title' => 'Prácticas',
-                'description' => 'Controla fechas, estado, bitácoras y evaluaciones de cada práctica.',
-                'columns' => $this->columns(['estudiante' => 'Estudiante', 'carrera' => 'Carrera', 'oferta' => 'Oferta', 'empresa' => 'Empresa', 'fecha_inicio' => 'Inicio', 'fecha_termino' => 'Término', 'estado' => 'Estado', 'calificacion_final' => 'Nota', 'bitacoras_count' => 'Bitácoras', 'evaluaciones_count' => 'Evaluaciones']),
+                'description' => 'Asigna postulaciones aprobadas y actualiza el estado de la práctica.',
+                'columns' => $this->columns(['estudiante' => 'Estudiante', 'carrera' => 'Carrera', 'oferta' => 'Oferta', 'empresa' => 'Empresa', 'fecha_inicio' => 'Inicio', 'fecha_termino' => 'Término', 'estado' => 'Estado']),
                 'fields' => [
                     $this->selectField('application_id', 'Postulación asignada', $pendingApplications),
                     $this->field('fecha_inicio', 'Fecha de inicio', 'date'),
                     $this->field('fecha_termino', 'Fecha de término', 'date'),
-                    $this->field('contratado', 'Contratado por la empresa', 'checkbox'),
                 ],
-                'actions' => ['transition', 'tracking', 'evaluation'],
+                'actions' => ['transition'],
             ],
         };
 
-        if ($resource === 'practices') {
-            $config['evaluatorType'] = 'coordinador';
-        }
         if ($request->user()?->hasRole('Coordinador')) {
             $config['canCreate'] = $resource === 'practices';
             $config['canDelete'] = false;
             if ($resource === 'offers') {
                 $config['fields'] = [];
-            }
-            if ($resource === 'practices') {
-                $config['evaluatorType'] = 'coordinador';
             }
         }
 
@@ -165,15 +158,6 @@ class ManagementPageController extends Controller
         ]);
     }
 
-    public function studentTracking(): View
-    {
-        return view('student.tracking', [
-            'apiUrl' => route('student.practices.index'),
-            'logsUrl' => url('/student/practices'),
-            'evaluationUrl' => url('/practices'),
-        ]);
-    }
-
     public function companyOffers(): View
     {
         $company = Company::query()->where('owner_user_id', auth()->id())->firstOrFail();
@@ -198,28 +182,9 @@ class ManagementPageController extends Controller
                     $this->field('vacantes', 'Cupos disponibles', 'number', ['min' => 1]),
                     $this->field('habilidades', 'Habilidades requeridas', 'tags'), $this->field('ubicacion', 'Ubicación'),
                 ],
-                'defaults' => ['company_id' => $company->id],
+                'defaults' => ['empresa_id' => $company->id],
                 'canCreate' => true,
                 'actions' => [],
-            ],
-        ]);
-    }
-
-    public function companyPractices(): View
-    {
-        return view('admin.management', [
-            'resource' => 'practices',
-            'config' => [
-                'apiUrl' => url('/company/practices'),
-                'dataUrl' => route('company.practices.data'),
-                'title' => 'Prácticas supervisadas',
-                'description' => 'Consulta el progreso y completa la evaluación del supervisor.',
-                'columns' => $this->columns(['estudiante' => 'Estudiante', 'carrera' => 'Carrera', 'oferta' => 'Oferta', 'fecha_inicio' => 'Inicio', 'fecha_termino' => 'Término', 'estado' => 'Estado', 'calificacion_final' => 'Nota']),
-                'fields' => [],
-                'canCreate' => false,
-                'canDelete' => false,
-                'actions' => ['evaluation'],
-                'evaluatorType' => 'supervisor',
             ],
         ]);
     }

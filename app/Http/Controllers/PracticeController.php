@@ -24,7 +24,7 @@ class PracticeController extends Controller
             'application.student.user:id,name,last_name',
             'application.student.career:id,nombre',
             'application.offer.company:id,razon_social',
-        ])->withCount(['logs', 'evaluations']);
+        ]);
         $user = $request->user();
 
         if ($user?->hasRole('Estudiante')) {
@@ -62,11 +62,11 @@ class PracticeController extends Controller
             if ($request->user()->hasRole('Coordinador')) {
                 abort_unless($application->student()->where('career_id', $request->user()->career_id)->exists(), 403);
             }
-            abort_unless($application->estado === 'Postulado', 409, 'Solo puedes asignar una postulación pendiente.');
+            abort_unless($application->status === 'Postulado', 409, 'Solo puedes asignar una postulación pendiente.');
             abort_if($offer->applications()->whereHas('practice')->count() >= $offer->vacantes, 409, 'La oferta ya completó sus cupos.');
 
             $application->update([
-                'estado' => 'Asignado',
+                'status' => 'Asignado',
                 'reviewed_by' => $request->user()->id,
                 'decision_at' => now(),
             ]);
@@ -86,7 +86,7 @@ class PracticeController extends Controller
     public function update(PracticeRequest $request, Practice $practice): JsonResponse
     {
         $this->authorizePractice($request, $practice);
-        $practice->update($request->safe()->only(['fecha_inicio', 'fecha_termino', 'contratado']));
+        $practice->update($request->safe()->only(['fecha_inicio', 'fecha_termino']));
 
         return response()->json($this->format($practice->refresh()->load(['application.student.user', 'application.student.career', 'application.offer.company'])));
     }
@@ -94,8 +94,7 @@ class PracticeController extends Controller
     public function destroy(Request $request, Practice $practice): Response
     {
         $this->authorizePractice($request, $practice);
-        abort_if($practice->logs()->exists() || $practice->evaluations()->exists(), 409, 'No puedes eliminar una práctica con seguimiento o evaluaciones.');
-        $practice->application()->update(['estado' => 'Postulado', 'reviewed_by' => null, 'decision_at' => null]);
+        $practice->application()->update(['status' => 'Postulado', 'reviewed_by' => null, 'decision_at' => null]);
         $practice->delete();
 
         return response()->noContent();
@@ -105,30 +104,22 @@ class PracticeController extends Controller
     {
         $this->authorizePractice($request, $practice);
         $validated = $request->validate([
-            'estado' => ['required', Rule::in(['En Curso', 'Informe Entregado', 'Evaluado', 'Finalizada'])],
+            'estado' => ['required', Rule::in(['En Curso', 'Informe Entregado', 'Finalizada'])],
         ]);
         $transitions = [
             'Asignado' => 'En Curso',
             'En Curso' => 'Informe Entregado',
-            'Informe Entregado' => 'Evaluado',
-            'Evaluado' => 'Finalizada',
+            'Informe Entregado' => 'Finalizada',
         ];
         abort_unless(($transitions[$practice->estado] ?? null) === $validated['estado'], 409, 'La transición solicitada no está permitida.');
 
-        if ($validated['estado'] === 'Evaluado') {
-            abort_unless($practice->evaluations()->pluck('tipo')->unique()->count() >= 2, 409, 'Se requieren las evaluaciones del supervisor y del coordinador.');
-            $grade = $practice->calculateFinalGrade();
-            abort_if($grade === null, 409, 'No fue posible calcular la nota final para la carrera del estudiante.');
-            $practice->calificacion_final = $grade;
-        }
         if ($validated['estado'] === 'Finalizada') {
-            abort_if($practice->calificacion_final === null, 409, 'La práctica requiere nota final antes de cerrarse.');
-            $practice->finalizada_at = now();
+            $practice->fecha_termino ??= today();
         }
 
         $practice->estado = $validated['estado'];
         $practice->save();
-        $practice->application()->update(['estado' => $validated['estado']]);
+        $practice->application()->update(['status' => $validated['estado']]);
 
         return response()->json($this->format($practice->refresh()->load(['application.student.user', 'application.student.career', 'application.offer.company'])));
     }
@@ -145,11 +136,6 @@ class PracticeController extends Controller
             'fecha_inicio' => $practice->fecha_inicio?->toDateString(),
             'fecha_termino' => $practice->fecha_termino?->toDateString(),
             'estado' => $practice->estado,
-            'calificacion_final' => $practice->calificacion_final,
-            'contratado' => $practice->contratado,
-            'bitacoras_count' => $practice->logs_count ?? $practice->logs()->count(),
-            'evaluaciones_count' => $practice->evaluations_count ?? $practice->evaluations()->count(),
-            'acta_url' => route('practices.acta', $practice),
         ];
     }
 

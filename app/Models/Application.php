@@ -15,9 +15,9 @@ class Application extends Model
         'student_id',
         'offer_id',
         'reviewed_by',
-        'estado',
+        'status',
         'cv_path',
-        'carta_motivacion',
+        'motivation',
         'matching_score',
         'decision_at',
     ];

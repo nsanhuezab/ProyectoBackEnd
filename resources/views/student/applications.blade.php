@@ -10,7 +10,7 @@
         </header>
         <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div class="overflow-x-auto p-3 sm:p-5">
-                <table id="applicationsTable" class="w-full text-left text-sm text-slate-700">
+                <table id="applicationsTable" class="w-full min-w-[720px] whitespace-nowrap text-left text-sm text-slate-700">
                     <thead><tr><th>Oferta</th><th>Empresa</th><th>Carrera</th><th>Estado</th><th>Afinidad</th><th>Fecha</th><th>CV</th><th>Acciones</th></tr></thead>
                 </table>
             </div>
@@ -36,7 +36,7 @@
                 },
                 columns: [
                     ...['offer', 'company', 'career', 'estado', 'matching_score', 'created_at'].map((data) => ({ data, render: (value, type) => type === 'display' ? $.fn.dataTable.render.text().display(String(value ?? '')) : value })),
-                    { data: 'cv_url', orderable: false, searchable: false, render: (url, type) => type === 'display' ? `<a class="text-red-700 underline" href="${$.fn.dataTable.render.text().display(url)}">Descargar</a>` : url },
+                    { data: 'cv_url', orderable: false, searchable: false, render: (url, type) => type === 'display' ? (url ? `<a class="text-red-700 underline" href="${$.fn.dataTable.render.text().display(url)}">Descargar</a>` : '—') : url },
                     { data: null, orderable: false, searchable: false, render: (_value, _type, row) => row.estado === 'Postulado' ? '<button type="button" data-withdraw class="text-red-700 hover:underline">Retirar</button>' : '' },
                 ],
             });

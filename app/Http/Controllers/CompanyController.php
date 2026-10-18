@@ -18,7 +18,7 @@ class CompanyController extends Controller
         return $this->dataTableResponse(
             $request,
             Company::query(),
-            searchable: ['razon_social', 'rut', 'rubro', 'contacto_nombre', 'contacto_correo'],
+            searchable: ['razon_social', 'rut', 'rubro', 'contacto_nombre', 'contacto_email'],
             sortable: [
                 'id' => 'id',
                 'razon_social' => 'razon_social',
@@ -27,7 +27,7 @@ class CompanyController extends Controller
             ],
             transform: fn (Company $company) => $company->only([
                 'id', 'razon_social', 'rut', 'rubro', 'direccion', 'sitio_web',
-                'contacto_nombre', 'contacto_correo', 'contacto_telefono',
+                'contacto_nombre', 'contacto_email', 'telefono',
             ]),
             defaultSort: 'razon_social',
         );

@@ -19,8 +19,8 @@ class Company extends Model
         'direccion',
         'sitio_web',
         'contacto_nombre',
-        'contacto_correo',
-        'contacto_telefono',
+        'contacto_email',
+        'telefono',
     ];
 
     public function owner(): BelongsTo
@@ -30,6 +30,6 @@ class Company extends Model
 
     public function offers(): HasMany
     {
-        return $this->hasMany(Offer::class);
+        return $this->hasMany(Offer::class, 'empresa_id');
     }
 }

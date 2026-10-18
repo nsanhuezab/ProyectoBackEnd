@@ -18,7 +18,7 @@ class OfferRequest extends FormRequest
             'titulo' => ['required', 'string', 'max:255'],
             'empresa' => ['nullable', 'string', 'max:255'],
             'vacantes' => ['required', 'integer', 'min:1', 'max:1000'],
-            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'empresa_id' => ['required', 'integer', 'exists:companies,id'],
             'career_ids' => ['required', 'array', 'min:1'],
             'career_ids.*' => ['integer', 'distinct', 'exists:careers,id'],
             'area' => ['required', 'string', 'max:120'],

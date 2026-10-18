@@ -15,19 +15,21 @@ class PracticeSeeder extends Seeder
     public function run(): void
     {
         $coordinator = User::role('Coordinador')->firstOrFail();
+        $application = Application::query()->orderBy('id')->first();
 
-        foreach (Application::orderBy('id')->get()->values() as $index => $application) {
-            $practice = Practice::updateOrCreate(
-                ['application_id' => $application->id],
-                [
-                    'assigned_by' => $coordinator->id,
-                    'fecha_inicio' => now()->subDays($index === 0 ? 7 : 45)->toDateString(),
-                    'fecha_termino' => now()->addDays($index === 0 ? 105 : -2)->toDateString(),
-                    'estado' => $index === 0 ? 'En Curso' : 'Informe Entregado',
-                    'contratado' => false,
-                ],
-            );
-            $application->update(['estado' => $practice->estado]);
+        if (! $application) {
+            return;
         }
+
+        $practice = Practice::updateOrCreate(
+            ['application_id' => $application->id],
+            [
+                'assigned_by' => $coordinator->id,
+                'fecha_inicio' => now()->subDays(7)->toDateString(),
+                'fecha_termino' => now()->addDays(105)->toDateString(),
+                'estado' => 'Asignado',
+            ],
+        );
+        $application->update(['status' => $practice->estado]);
     }
 }
