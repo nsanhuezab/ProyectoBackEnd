@@ -44,6 +44,11 @@
                 <a href="{{ route('login') }}" class="bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 font-bold px-6 py-3 rounded-lg transition-colors text-base">
                     Iniciar Sesión
                 </a>
+                @if(app()->environment('local') && config('app.demo_mode'))
+                    <a href="{{ route('demo') }}" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-lg transition-colors text-base">
+                        Entrar al modo de prueba
+                    </a>
+                @endif
             </div>
         </div>
 

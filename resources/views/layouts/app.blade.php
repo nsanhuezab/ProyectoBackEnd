@@ -44,10 +44,18 @@
 
         <nav class="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
 
-            @role('Administrador')
+            @if (
+                (app()->environment('local') && config('app.demo_mode')) ||
+                    auth()->user()?->hasRole('Administrador') ||
+                    auth()->user()?->hasRole('Super Administrador'))
+                <div role="presentation"
+                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Administrador y Super Administrador
+                </div>
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('admin.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.dashboard*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.dashboard*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                         </path>
@@ -57,7 +65,8 @@
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('admin.practices*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.practices*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.practices*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
                         </path>
@@ -67,31 +76,65 @@
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('admin.administration*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.administration*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.administration*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
                         </path>
                     </svg>
                     <span>Administración</span>
                 </a>
-            @endrole
+            @endif
 
-            @role('Coordinador')
+            @if ((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Coordinador'))
+                <div role="presentation"
+                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Coordinador
+                </div>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('coordinator.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('coordinator.dashboard*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span class="leading-tight">Dashboard<br><span
+                            class="text-xs {{ request()->routeIs('coordinator.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal">Coordinador</span></span>
+                </a>
+
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('coordinator.practices*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('coordinator.practices*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('coordinator.practices*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
                         </path>
                     </svg>
                     <span class="leading-tight">Gestión y Evaluación de Prácticas</span>
                 </a>
-            @endrole
+            @endif
 
-            @role('Estudiante')
+            @if ((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Estudiante'))
+                <div role="presentation"
+                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Estudiante
+                </div>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.dashboard') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.dashboard') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                        </path>
+                    </svg>
+                    <span>Mi Dashboard</span>
+                </a>
+
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.offers*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.offers*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
@@ -100,7 +143,8 @@
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.applications*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.applications*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.applications*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                         </path>
@@ -110,25 +154,43 @@
 
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.tracking*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.tracking*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.tracking*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                         </path>
                     </svg>
                     <span>Seguimiento</span>
                 </a>
-            @endrole
+            @endif
 
-            @role('Empresa')
+            @if ((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Empresa'))
+                <div role="presentation"
+                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Empresa
+                </div>
+                <a href="#"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.dashboard*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
+                    <span class="leading-tight">Dashboard<br><span
+                            class="text-xs {{ request()->routeIs('company.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal">Empresa</span></span>
+                </a>
+
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.offers*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.offers*') ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span>Publicar Oferta</span>
                 </a>
-            @endrole
+            @endif
 
         </nav>
     </aside>
