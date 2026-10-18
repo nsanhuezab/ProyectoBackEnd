@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'last_name', 'rut', 'gender', 'age', 'email', 'password'])]
+#[Fillable(['name', 'last_name', 'rut', 'gender', 'age', 'email', 'password', 'telefono', 'career_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -36,5 +38,15 @@ class User extends Authenticatable
     public function career(): BelongsTo
     {
         return $this->belongsTo(Career::class);
+    }
+
+    public function studentProfile(): HasOne
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    public function companies(): HasMany
+    {
+        return $this->hasMany(Company::class, 'owner_user_id');
     }
 }

@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Offer extends Model
 {
@@ -12,7 +15,54 @@ class Offer extends Model
     protected $fillable = [
         'titulo',
         'empresa',
+        'company_id',
+        'created_by',
+        'approved_by',
         'vacantes',
         'estado',
+        'area',
+        'perfil',
+        'nivel_requerido',
+        'modalidad',
+        'duracion_semanas',
+        'horario',
+        'remuneracion',
+        'habilidades',
+        'approved_at',
+        'ubicacion',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'habilidades' => 'array',
+            'approved_at' => 'datetime',
+            'remuneracion' => 'decimal:2',
+        ];
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function careers(): BelongsToMany
+    {
+        return $this->belongsToMany(Career::class);
+    }
+
+    public function applications(): HasMany
+    {
+        return $this->hasMany(Application::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }

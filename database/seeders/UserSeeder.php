@@ -47,9 +47,9 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('12345678'),
             ]
         );
-        $user1->assignRole('Administrador');
-        $user2->assignRole('Estudiante');
-        $user3->assignRole('Coordinador');
-        $user4->assignRole('Empresa');
+        $user1->syncRoles('Administrador');
+        $user2->syncRoles('Estudiante');
+        $user3->syncRoles('Coordinador');
+        $user4->syncRoles('Empresa');
     }
 }

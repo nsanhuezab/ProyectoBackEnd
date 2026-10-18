@@ -49,7 +49,7 @@
             </div>
 
             <div class="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-                <table class="w-full border-collapse text-left">
+                <table id="usersTable" class="w-full border-collapse text-left">
                     <thead>
                         <tr
                             class="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -100,8 +100,8 @@
                                         Editar
                                     </button>
                                     @unless (auth()->user()?->is($user))
-                                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
-                                            class="ml-1 inline" onsubmit="return confirm('¿Eliminar este usuario?')">
+                                        <form id="delete-user-{{ $user->id }}" action="{{ route('admin.users.destroy', $user) }}" method="POST"
+                                            class="ml-1 inline" onsubmit="event.preventDefault(); confirmDelete('delete-user-{{ $user->id }}')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
@@ -287,3 +287,16 @@
         });
     </script>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            $('#usersTable').DataTable({
+                scrollX: true,
+                pageLength: 10,
+                lengthMenu: [10, 25, 50, 100],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            });
+        });
+    </script>
+@endpush
