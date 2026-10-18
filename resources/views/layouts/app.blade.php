@@ -8,6 +8,12 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     <style>
         body {
             font-family: 'Roboto', sans-serif;
@@ -38,7 +44,7 @@
 
         <nav class="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
 
-            <!-- a@role('Administrador') -->
+            @role('Administrador')
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('admin.dashboard*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.dashboard*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,8 +52,7 @@
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                         </path>
                     </svg>
-                    <span class="leading-tight">Dashboard<br><span
-                            class="text-xs {{ request()->routeIs('admin.dashboard*') ? 'text-slate-300' : 'text-slate-500' }} font-normal"></span></span>
+                    <span class="leading-tight">Dashboard</span>
                 </a>
 
                 <a href="#"
@@ -69,10 +74,9 @@
                     </svg>
                     <span>Administración</span>
                 </a>
-            <!-- a@endrole -->
+            @endrole
 
-            <!-- a@role('Coordinador') -->
-
+            @role('Coordinador')
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('coordinator.practices*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('coordinator.practices*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,10 +86,9 @@
                     </svg>
                     <span class="leading-tight">Gestión y Evaluación de Prácticas</span>
                 </a>
-            <!--a@endrole -->
+            @endrole
 
-            <!-- a@role('Estudiante') -->
-
+            @role('Estudiante')
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.offers*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,10 +117,9 @@
                     </svg>
                     <span>Seguimiento</span>
                 </a>
-            <!--a@endrole -->
+            @endrole
 
-            <!-- a@role('Empresa')-->
-
+            @role('Empresa')
                 <a href="#"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.offers*') ? 'text-white' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,11 +128,10 @@
                     </svg>
                     <span>Publicar Oferta</span>
                 </a>
-            <!--a@endrole -->
+            @endrole
 
         </nav>
     </aside>
-
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
 
@@ -211,7 +212,7 @@
                         class="flex items-center gap-2 focus:outline-none rounded-full transition-shadow group">
                         <div
                             class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:ring-2 group-hover:ring-white transition-all select-none">
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name, 0, 1)) }}
+                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
                         </div>
                     </button>
 
@@ -220,7 +221,7 @@
                         <!-- Cabecera de usuario -->
                         <div class="px-4 py-4 border-b border-slate-100 bg-slate-50/50">
                             <p class="text-sm font-bold text-slate-800">{{ auth()->user()->name }}
-                                {{ auth()->user()->last_name }}</p>
+                                {{ auth()->user()->last_name ?? '' }}</p>
                             <p class="text-xs text-slate-500 truncate mt-0.5">{{ auth()->user()->email }}</p>
                         </div>
                         <div class="py-1">
@@ -244,13 +245,59 @@
 
         <main class="flex-1 overflow-y-auto bg-slate-50/50 p-4 sm:p-6 lg:p-8">
             <div class="max-w-[1400px] mx-auto">
-                <!-- AQUI VA EL CONTENIDO DE CADA VISTA -->
+                <!-- CONTENIDO DINÁMICO -->
                 @yield('content')
             </div>
         </main>
     </div>
 
+    <!-- Carga de Scripts: jQuery, DataTables & SweetAlert2 -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Disparadores globales de SweetAlert2 para mensajes Flash de Laravel -->
+    @if(session('success'))
     <script>
+        Swal.fire({
+            icon: 'success',
+            title: '¡Éxito!',
+            text: "{{ session('success') }}",
+            timer: 3000,
+            showConfirmButton: false
+        });
+    </script>
+    @endif
+
+    @if(session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+        });
+    </script>
+    @endif
+
+    <script>
+        // Función global para confirmación de eliminación con SweetAlert2
+        function confirmDelete(formId) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "Esta acción no se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -297,12 +344,10 @@
             const userContainer = document.getElementById('user-menu-container');
             const userMenu = document.getElementById('user-menu');
 
-            if (notiContainer && notiMenu && !notiContainer.contains(event.target) && !notiMenu.classList.contains(
-                    'hidden')) {
+            if (notiContainer && notiMenu && !notiContainer.contains(event.target) && !notiMenu.classList.contains('hidden')) {
                 toggleMenu('notifications-menu');
             }
-            if (userContainer && userMenu && !userContainer.contains(event.target) && !userMenu.classList.contains(
-                    'hidden')) {
+            if (userContainer && userMenu && !userContainer.contains(event.target) && !userMenu.classList.contains('hidden')) {
                 toggleMenu('user-menu');
             }
         });
