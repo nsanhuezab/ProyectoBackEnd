@@ -28,6 +28,8 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
+    'demo_mode' => env('APP_DEMO_MODE', env('APP_ENV', 'production') === 'local'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode
