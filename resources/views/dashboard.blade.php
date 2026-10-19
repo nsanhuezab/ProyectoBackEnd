@@ -2,6 +2,64 @@
 
 @section('title', 'Administración de usuarios')
 
+@push('styles')
+    <style>
+        /* Estilos personalizados para integrar DataTables con Tailwind CSS */
+        .dataTables_wrapper .dataTables_length select {
+            padding-right: 2rem !important;
+            padding-left: 0.75rem !important;
+            padding-top: 0.35rem !important;
+            padding-bottom: 0.35rem !important;
+            border-radius: 0.5rem !important;
+            border-color: #cbd5e1 !important;
+            font-size: 0.875rem !important;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 0.5rem !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 0.35rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            outline: none !important;
+        }
+
+        .dataTables_wrapper .dataTables_filter input:focus {
+            border-color: #0f172a !important;
+            box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1) !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 0.375rem !important;
+            border: 1px solid #e2e8f0 !important;
+            background: #ffffff !important;
+            color: #334155 !important;
+            font-size: 0.875rem !important;
+            padding: 0.375rem 0.75rem !important;
+            margin-left: 0.25rem !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #0f172a !important;
+            color: #ffffff !important;
+            border-color: #0f172a !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        /* Corregir desalineación de encabezados en DataTables */
+        table.dataTable {
+            width: 100% !important;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+            border-collapse: collapse !important;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="space-y-6">
         <div class="flex flex-col gap-4 border-b-2 border-slate-800/80 pb-4 sm:flex-row sm:items-end sm:justify-between">
@@ -36,23 +94,21 @@
             </div>
         @endif
 
-        <section class="overflow-hidden rounded-xl border border-slate-300/80 bg-[#faf9f6] p-4 shadow-sm md:p-6">
+        <section class="rounded-xl border border-slate-300/80 bg-[#faf9f6] p-4 shadow-sm md:p-6">
             <div class="mb-5 flex items-center justify-between">
                 <p class="text-xs font-medium text-slate-500">
                     Usuarios registrados:
                     <span class="font-bold text-slate-800">{{ $users->count() }}</span>
                 </p>
                 @if (!$showInternalId)
-                    <p class="text-[11px] text-slate-400">El identificador interno solo está disponible para Super
-                        Administrador.</p>
+                    <p class="text-[11px] text-slate-400">El identificador interno solo está disponible para Super Administrador.</p>
                 @endif
             </div>
 
-            <div class="overflow-x-auto rounded-lg border border-slate-200/80 bg-white">
-                <table id="usersTable" class="w-full min-w-[920px] whitespace-nowrap border-collapse text-left">
+            <div class="rounded-lg border border-slate-200/80 bg-white p-4">
+                <table id="usersTable" class="w-full border-collapse text-left text-xs text-slate-700">
                     <thead>
-                        <tr
-                            class="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <tr class="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                             @if ($showInternalId)
                                 <th class="px-3 py-3">ID interno</th>
                             @endif
@@ -66,15 +122,15 @@
                             <th class="px-3 py-3 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs font-medium text-slate-700">
-                        @forelse ($users as $user)
+                    <tbody class="divide-y divide-slate-100 font-medium">
+                        @foreach ($users as $user)
                             <tr class="transition-colors hover:bg-slate-50">
                                 @if ($showInternalId)
                                     <td class="whitespace-nowrap px-3 py-3 font-mono font-semibold text-slate-500">
-                                        {{ $user->id }}</td>
+                                        {{ $user->id }}
+                                    </td>
                                 @endif
-                                <td class="whitespace-nowrap px-3 py-3 font-semibold text-slate-800">{{ $user->name }}
-                                </td>
+                                <td class="whitespace-nowrap px-3 py-3 font-semibold text-slate-800">{{ $user->name }}</td>
                                 <td class="whitespace-nowrap px-3 py-3">{{ $user->last_name ?: '—' }}</td>
                                 <td class="whitespace-nowrap px-3 py-3 font-mono">{{ $user->rut ?: '—' }}</td>
                                 <td class="whitespace-nowrap px-3 py-3">{{ $user->gender ?: '—' }}</td>
@@ -112,30 +168,21 @@
                                     @endunless
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ $showInternalId ? 9 : 8 }}" class="px-4 py-12 text-center">
-                                    <i class="fa-solid fa-users mb-3 text-2xl text-slate-300"></i>
-                                    <p class="text-sm font-semibold text-slate-700">Todavía no hay usuarios registrados.</p>
-                                    <p class="mt-1 text-xs text-slate-400">Usa “Agregar usuario” para crear la primera
-                                        cuenta.</p>
-                                </td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
         </section>
     </div>
 
+    <!-- Modal Modal Form -->
     <div id="userModal"
         class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 opacity-0 backdrop-blur-sm transition-opacity duration-200">
         <div id="userModalPanel"
             class="max-h-[92vh] w-full max-w-2xl scale-95 overflow-y-auto rounded-xl bg-white shadow-2xl transition-transform duration-200">
             <div class="flex items-center justify-between bg-slate-900 px-6 py-4 text-white">
                 <h2 id="userModalTitle" class="font-bold">Agregar usuario</h2>
-                <button type="button" onclick="closeUserModal()" class="text-slate-300 hover:text-white"
-                    aria-label="Cerrar">
+                <button type="button" onclick="closeUserModal()" class="text-slate-300 hover:text-white" aria-label="Cerrar">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
@@ -152,8 +199,7 @@
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100">
                     </div>
                     <div>
-                        <label for="userLastName" class="mb-1 block text-xs font-semibold text-slate-700">Apellidos
-                            *</label>
+                        <label for="userLastName" class="mb-1 block text-xs font-semibold text-slate-700">Apellidos *</label>
                         <input id="userLastName" name="last_name" required maxlength="255" autocomplete="family-name"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100">
                     </div>
@@ -179,10 +225,8 @@
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100">
                     </div>
                     <div>
-                        <label for="userEmail" class="mb-1 block text-xs font-semibold text-slate-700">Correo electrónico
-                            *</label>
-                        <input id="userEmail" name="email" type="email" required maxlength="255"
-                            autocomplete="email"
+                        <label for="userEmail" class="mb-1 block text-xs font-semibold text-slate-700">Correo electrónico *</label>
+                        <input id="userEmail" name="email" type="email" required maxlength="255" autocomplete="email"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100">
                     </div>
                     <div>
@@ -196,17 +240,17 @@
                         </select>
                     </div>
                     <div>
-                        <label for="userPassword" class="mb-1 block text-xs font-semibold text-slate-700">Contraseña <span
-                                id="passwordRequirement">*</span></label>
-                        <input id="userPassword" name="password" type="password" minlength="8"
-                            autocomplete="new-password"
+                        <label for="userPassword" class="mb-1 block text-xs font-semibold text-slate-700">
+                            Contraseña <span id="passwordRequirement">*</span>
+                        </label>
+                        <input id="userPassword" name="password" type="password" minlength="8" autocomplete="new-password"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100">
                         <p id="passwordHelp" class="mt-1 text-[11px] text-slate-400">Debe tener al menos 8 caracteres.</p>
                     </div>
                     <div id="passwordConfirmationField">
-                        <label for="userPasswordConfirmation"
-                            class="mb-1 block text-xs font-semibold text-slate-700">Confirmar contraseña <span
-                                id="confirmationRequirement">*</span></label>
+                        <label for="userPasswordConfirmation" class="mb-1 block text-xs font-semibold text-slate-700">
+                            Confirmar contraseña <span id="confirmationRequirement">*</span>
+                        </label>
                         <input id="userPasswordConfirmation" name="password_confirmation" type="password" minlength="8"
                             autocomplete="new-password"
                             class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100">
@@ -217,8 +261,7 @@
                     <button type="button" onclick="closeUserModal()"
                         class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button>
                     <button type="submit"
-                        class="rounded-lg bg-[#C8102E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#9e0b22]">Guardar
-                        usuario</button>
+                        class="rounded-lg bg-[#C8102E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#9e0b22]">Guardar usuario</button>
                 </div>
             </form>
         </div>
@@ -240,8 +283,7 @@
             const isEditing = mode === 'edit';
 
             document.getElementById('userModalTitle').textContent = isEditing ? 'Editar usuario' : 'Agregar usuario';
-            userForm.action = isEditing ? updateUserUrl.replace('__USER__', user.id ?? user.user_id) :
-                @js(route('admin.users.store'));
+            userForm.action = isEditing ? updateUserUrl.replace('__USER__', user.id ?? user.user_id) : @js(route('admin.users.store'));
             userFormMethod.value = isEditing ? 'PUT' : 'POST';
             document.getElementById('userId').value = isEditing ? (user.id ?? user.user_id ?? '') : '';
 
@@ -292,10 +334,13 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             $('#usersTable').DataTable({
-                scrollX: true,
+                responsive: true,
+                autoWidth: false,
                 pageLength: 10,
                 lengthMenu: [10, 25, 50, 100],
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                }
             });
         });
     </script>
