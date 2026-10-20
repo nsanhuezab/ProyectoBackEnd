@@ -2,54 +2,84 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $user1 = User::updateOrCreate(
-            [
-                'email' => 'admin@ucsc.cl',
-            ],
+        $users = [
             [
                 'name' => 'Administrador',
-                'password' => Hash::make('12345678'),
-            ]
-        );
-        $user2 = User::updateOrCreate(
-            [
-                'email' => 'juan@ucsc.cl',
+                'last_name' => 'UCSC',
+                'rut' => '11111111-1',
+                'gender' => 'Prefiero no decir',
+                'age' => 40,
+                'email' => 'admin@ucsc.cl',
+                'role' => 'Administrador',
             ],
             [
                 'name' => 'Juan',
-                'password' => Hash::make('12345678'),
-            ]
-        );
-
-        $user3 = User::updateOrCreate(
-            [
-                'email' => 'coordinador@ucsc.cl',
+                'last_name' => 'Pérez',
+                'rut' => '22222222-2',
+                'gender' => 'Masculino',
+                'age' => 22,
+                'email' => 'juan@ucsc.cl',
+                'role' => 'Estudiante',
             ],
             [
                 'name' => 'Coordinador',
-                'password' => Hash::make('12345678'),
-            ]
-        );
-        $user4 = User::updateOrCreate(
-            [
-                'email' => 'empresa@gmail.com',
+                'last_name' => 'UCSC',
+                'rut' => '33333333-3',
+                'gender' => 'Prefiero no decir',
+                'age' => 35,
+                'email' => 'coordinador@ucsc.cl',
+                'role' => 'Coordinador',
             ],
             [
                 'name' => 'Empresa',
-                'password' => Hash::make('12345678'),
-            ]
-        );
-        $user1->syncRoles('Administrador');
-        $user2->syncRoles('Estudiante');
-        $user3->syncRoles('Coordinador');
-        $user4->syncRoles('Empresa');
+                'last_name' => 'UCSC',
+                'rut' => '44444444-4',
+                'gender' => 'Prefiero no decir',
+                'age' => 30,
+                'email' => 'empresa@gmail.com',
+                'role' => 'Empresa',
+            ],
+            [
+                'name' => 'Roberto',
+                'last_name' => 'Soto',
+                'rut' => '55555555-5',
+                'gender' => 'Masculino',
+                'age' => 38,
+                'email' => 'rsoto@ucsc.cl',
+                'role' => 'Coordinador',
+            ],
+            [
+                'name' => 'Claudia',
+                'last_name' => 'Valenzuela',
+                'rut' => '66666666-6',
+                'gender' => 'Femenino',
+                'age' => 36,
+                'email' => 'cvalenzuela@ucsc.cl',
+                'role' => 'Coordinador',
+            ],
+        ];
+
+        foreach ($users as $data) {
+            $role = $data['role'];
+            unset($data['role']);
+
+            $user = User::updateOrCreate(
+                ['email' => $data['email']],
+                [
+                    ...$data,
+                    'password' => Hash::make('12345678'),
+                ]
+            );
+
+            $user->syncRoles($role);
+        }
     }
 }

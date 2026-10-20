@@ -64,9 +64,15 @@
                     <span class="leading-tight">Usuarios y roles</span>
                 </a>
 
-                <a href="{{ route('admin.management.index', 'practices') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'practices' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'practices' ? 'text-white' : 'text-slate-500' }}"
+                @php
+                    $practicesUrl = Route::has('practices.index')
+                        ? route('practices.index')
+                        : (Route::has('admin.management.index') ? route('admin.management.index', 'practices') : '#');
+                    $isPracticesActive = request()->route('resource') === 'practices' || request()->routeIs('practices.*');
+                @endphp
+                <a href="{{ $practicesUrl }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ $isPracticesActive ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                    <svg class="w-5 h-5 shrink-0 {{ $isPracticesActive ? 'text-white' : 'text-slate-500' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
@@ -75,9 +81,15 @@
                     <span class="leading-tight">Prácticas</span>
                 </a>
 
-                <a href="{{ route('admin.management.index', 'careers') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'careers' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                    <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'careers' ? 'text-white' : 'text-slate-500' }}"
+                @php
+                    $careersUrl = Route::has('careers.index')
+                        ? route('careers.index')
+                        : (Route::has('admin.management.index') ? route('admin.management.index', 'careers') : '#');
+                    $isCareersActive = request()->route('resource') === 'careers' || request()->routeIs('careers.*');
+                @endphp
+                <a href="{{ $careersUrl }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ $isCareersActive ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                    <svg class="w-5 h-5 shrink-0 {{ $isCareersActive ? 'text-white' : 'text-slate-500' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
@@ -85,10 +97,27 @@
                     </svg>
                     <span>Carreras</span>
                 </a>
-                @foreach (['coordinators' => 'Coordinadores', 'students' => 'Estudiantes', 'companies' => 'Empresas', 'offers' => 'Ofertas', 'applications' => 'Postulaciones'] as $resource => $label)
-                    <a href="{{ route('admin.management.index', $resource) }}"
-                        class="block rounded-lg px-3 py-2 text-sm font-medium {{ request()->route('resource') === $resource ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
-                        {{ $label }}
+
+                @php
+                    $adminResources = [
+                        'coordinators' => 'Coordinadores',
+                        'students' => 'Estudiantes',
+                        'companies' => 'Empresas',
+                        'offers' => 'Ofertas',
+                        'applications' => 'Postulaciones',
+                    ];
+                @endphp
+
+                @foreach ($adminResources as $resKey => $resLabel)
+                    @php
+                        $itemUrl = Route::has($resKey . '.index')
+                            ? route($resKey . '.index')
+                            : (Route::has('admin.management.index') ? route('admin.management.index', $resKey) : '#');
+                        $isItemActive = request()->route('resource') === $resKey || request()->routeIs($resKey . '.*');
+                    @endphp
+                    <a href="{{ $itemUrl }}"
+                        class="block rounded-lg px-3 py-2 text-sm font-medium {{ $isItemActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100' }}">
+                        {{ $resLabel }}
                     </a>
                 @endforeach
             @endif
@@ -98,18 +127,25 @@
                     class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Coordinador
                 </div>
-                        <a href="{{ route('coordinator.management.index', 'applications') }}"
-                            class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'applications' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'applications' ? 'text-white' : 'text-slate-500' }}"
-                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                </path>
-                            </svg>
-                            <span class="leading-tight">Postulaciones</span>
-                        </a>
-                <a href="{{ route('coordinator.management.index', 'offers') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Aprobar ofertas</a>
-                <a href="{{ route('coordinator.management.index', 'practices') }}" class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Prácticas</a>
+                @php
+                    $coordAppsUrl = Route::has('coordinator.applications.index')
+                        ? route('coordinator.applications.index')
+                        : (Route::has('coordinator.management.index') ? route('coordinator.management.index', 'applications') : '#');
+                @endphp
+                <a href="{{ $coordAppsUrl }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->route('resource') === 'applications' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
+                    <svg class="w-5 h-5 shrink-0 {{ request()->route('resource') === 'applications' ? 'text-white' : 'text-slate-500' }}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span class="leading-tight">Postulaciones</span>
+                </a>
+                <a href="{{ Route::has('coordinator.offers.index') ? route('coordinator.offers.index') : (Route::has('coordinator.management.index') ? route('coordinator.management.index', 'offers') : '#') }}"
+                    class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Aprobar ofertas</a>
+                <a href="{{ Route::has('coordinator.practices.index') ? route('coordinator.practices.index') : (Route::has('coordinator.management.index') ? route('coordinator.management.index', 'practices') : '#') }}"
+                    class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Prácticas</a>
             @endif
 
             @if ((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Estudiante'))
@@ -117,7 +153,7 @@
                     class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Estudiante
                 </div>
-                <a href="{{ route('student.offers.view') }}"
+                <a href="{{ Route::has('student.offers.view') ? route('student.offers.view') : '#' }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.offers*') ? 'text-white' : 'text-slate-500' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +162,7 @@
                     </svg>
                     <span>Explorar Ofertas</span>
                 </a>
-                <a href="{{ route('student.applications.view') }}"
+                <a href="{{ Route::has('student.applications.view') ? route('student.applications.view') : '#' }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('student.applications*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('student.applications*') ? 'text-white' : 'text-slate-500' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +179,7 @@
                     class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                     Empresa
                 </div>
-                <a href="{{ route('company.offers.view') }}"
+                <a href="{{ Route::has('company.offers.view') ? route('company.offers.view') : '#' }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 {{ request()->routeIs('company.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100' }}">
                     <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('company.offers*') ? 'text-white' : 'text-slate-500' }}"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +272,7 @@
                         class="flex items-center gap-2 focus:outline-none rounded-full transition-shadow group">
                         <div
                             class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:ring-2 group-hover:ring-white transition-all select-none">
-                            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
+                            {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
                         </div>
                     </button>
 
@@ -244,9 +280,9 @@
                         class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 z-50 overflow-hidden transform opacity-0 scale-95 transition-all duration-200 origin-top-right">
                         <!-- Cabecera de usuario -->
                         <div class="px-4 py-4 border-b border-slate-100 bg-slate-50/50">
-                            <p class="text-sm font-bold text-slate-800">{{ auth()->user()->name }}
+                            <p class="text-sm font-bold text-slate-800">{{ auth()->user()->name ?? 'Usuario' }}
                                 {{ auth()->user()->last_name ?? '' }}</p>
-                            <p class="text-xs text-slate-500 truncate mt-0.5">{{ auth()->user()->email }}</p>
+                            <p class="text-xs text-slate-500 truncate mt-0.5">{{ auth()->user()->email ?? '' }}</p>
                         </div>
                         <div class="py-1">
                             <form method="POST" action="{{ route('logout') }}" class="w-full">
