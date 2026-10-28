@@ -16,9 +16,21 @@ class OfferRequest extends FormRequest
     {
         return [
             'titulo' => ['required', 'string', 'max:255'],
-            'empresa' => ['required', 'string', 'max:255'],
+            'empresa' => ['nullable', 'string', 'max:255'],
             'vacantes' => ['required', 'integer', 'min:1', 'max:1000'],
-            'estado' => ['required', Rule::in(['Disponible', 'Cerrada'])],
+            'empresa_id' => ['required', 'integer', 'exists:companies,id'],
+            'career_ids' => ['required', 'array', 'min:1'],
+            'career_ids.*' => ['integer', 'distinct', 'exists:careers,id'],
+            'area' => ['required', 'string', 'max:120'],
+            'perfil' => ['required', 'string', 'max:5000'],
+            'nivel_requerido' => ['required', 'string', 'max:120'],
+            'modalidad' => ['required', Rule::in(['Presencial', 'Remota', 'Híbrida'])],
+            'duracion_semanas' => ['required', 'integer', 'between:1,104'],
+            'horario' => ['required', 'string', 'max:255'],
+            'remuneracion' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'habilidades' => ['required', 'array', 'min:1', 'max:30'],
+            'habilidades.*' => ['string', 'max:100'],
+            'ubicacion' => ['required', 'string', 'max:255'],
         ];
     }
 }

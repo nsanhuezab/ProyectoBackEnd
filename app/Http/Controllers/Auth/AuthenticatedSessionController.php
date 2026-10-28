@@ -27,8 +27,19 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $user = $request->user();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        if ($user->hasRole('Estudiante')) {
+            $destination = route('student.offers.view', absolute: false);
+        } elseif ($user->hasRole('Empresa')) {
+            $destination = route('company.offers.view', absolute: false);
+        } elseif ($user->hasRole('Coordinador')) {
+            $destination = route('coordinator.management.index', 'applications', absolute: false);
+        } else {
+            $destination = route('dashboard', absolute: false);
+        }
+
+        return redirect()->intended($destination);
     }
 
     /**

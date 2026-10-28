@@ -35,7 +35,7 @@
                 Conectando el talento académico con el sector productivo
             </h1>
             <p class="text-lg text-gray-600 mb-8">
-                Plataforma centralizada para la administración de prácticas profesionales. Gestiona ofertas, postulaciones en línea, bitácoras de avance y métricas de empleabilidad en un solo lugar.
+                Plataforma centralizada para administrar empresas, carreras, ofertas de práctica y postulaciones en línea.
             </p>
             <div class="flex justify-center space-x-4">
                 <a href="{{ route('register') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg shadow transition-colors text-base">
@@ -44,6 +44,11 @@
                 <a href="{{ route('login') }}" class="bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 font-bold px-6 py-3 rounded-lg transition-colors text-base">
                     Iniciar Sesión
                 </a>
+                @if(app()->environment('local') && config('app.demo_mode'))
+                    <a href="{{ route('demo') }}" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-lg transition-colors text-base">
+                        Entrar al modo de prueba
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -72,9 +77,9 @@
                 <div class="w-12 h-12 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-xl mb-4 font-bold">
                     <i class="bi bi-graph-up-arrow"></i>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Indicadores y KPIs</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Asignación de prácticas</h3>
                 <p class="text-gray-600 text-sm">
-                    Panel gerencial con tasas de aprobación, empleabilidad post-práctica y ranking de satisfacción de los centros evaluados por los estudiantes.
+                    La coordinación revisa postulaciones, afinidad y cupos antes de asignar estudiantes a una práctica.
                 </p>
             </div>
         </div>
