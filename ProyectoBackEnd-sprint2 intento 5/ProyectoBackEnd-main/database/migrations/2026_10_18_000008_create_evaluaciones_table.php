@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('evaluaciones', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('practica_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('evaluador_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('tipo', 20);
+            $table->decimal('nota', 3, 1);
+            $table->date('fecha');
+            $table->text('comentario')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('evaluaciones');
+    }
+};
