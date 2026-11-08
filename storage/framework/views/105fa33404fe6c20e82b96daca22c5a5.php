@@ -19,6 +19,34 @@
         body {
             font-family: 'Roboto', sans-serif;
         }
+
+        /* Campos de formulario de los modales */
+        .form-input {
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            padding: 0.6rem 0.85rem;
+            font-size: 13px;
+            color: #1e293b;
+            transition: all .15s;
+        }
+        .form-input:focus {
+            outline: none;
+            background: #fff;
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px #fee2e2;
+        }
+
+        /* Pie de las tablas DataTables */
+        .dataTables_wrapper .dataTables_info { padding: 1rem 1.5rem; font-size: 12.5px; color: #64748b; }
+        .dataTables_wrapper .dataTables_paginate { padding: 0.75rem 1.5rem; font-size: 12.5px; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+            background: #0f172a; color: #fff !important; border-color: #0f172a; border-radius: 0.5rem;
+        }
+        table.dataTable.no-footer { border-bottom: 0; }
+        table.dataTable thead th { border-bottom: 1px solid #f1f5f9; }
     </style>
 </head>
 
@@ -43,154 +71,71 @@
             </button>
         </div>
 
-        <nav class="flex-1 px-4 py-6 space-y-3 overflow-y-auto">
+        <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+            <?php
+                $isDemo = app()->environment('local') && config('app.demo_mode');
+                $currentUser = auth()->user();
+                $icons = [
+                    'users' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+                    'careers' => 'M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4',
+                    'coordinators' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+                    'students' => 'M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z',
+                    'companies' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+                    'offers' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+                    'applications' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+                    'practices' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+                    'search' => 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+                ];
 
-            <?php if(
-                (app()->environment('local') && config('app.demo_mode')) ||
-                    auth()->user()?->hasRole('Administrador') ||
-                    auth()->user()?->hasRole('Super Administrador')): ?>
-                <div role="presentation"
-                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Administrador y Super Administrador
-                </div>
-                <a href="<?php echo e(route('dashboard')); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e(request()->routeIs('dashboard') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e(request()->routeIs('dashboard') ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Usuarios y roles</span>
-                </a>
+                // Cada sección del menú: [título, ¿se muestra?, [ [nombre de ruta, texto, ícono], ... ]]
+                $menu = [
+                    ['Administración', $isDemo || $currentUser?->hasAnyRole(['Administrador', 'Super Administrador']), [
+                        ['dashboard', 'Usuarios y roles', 'users'],
+                        ['careers.index', 'Carreras', 'careers'],
+                        ['coordinators.index', 'Coordinadores', 'coordinators'],
+                        ['students.index', 'Estudiantes', 'students'],
+                        ['companies.index', 'Empresas', 'companies'],
+                        ['offers.index', 'Ofertas', 'offers'],
+                        ['applications.index', 'Postulaciones', 'applications'],
+                        ['practices.index', 'Prácticas', 'practices'],
+                    ]],
+                    ['Coordinador', ! $isDemo && $currentUser?->hasRole('Coordinador'), [
+                        ['applications.index', 'Postulaciones', 'applications'],
+                        ['offers.index', 'Aprobar ofertas', 'offers'],
+                        ['practices.index', 'Prácticas', 'practices'],
+                    ]],
+                    ['Estudiante', $isDemo || $currentUser?->hasRole('Estudiante'), [
+                        ['student.offers.view', 'Explorar ofertas', 'search'],
+                        ['student.applications.view', 'Mis postulaciones', 'applications'],
+                    ]],
+                    ['Empresa', ! $isDemo && $currentUser?->hasRole('Empresa'), [
+                        ['offers.index', 'Mis ofertas', 'offers'],
+                    ]],
+                ];
+            ?>
 
-                <?php
-                    $practicesUrl = Route::has('practices.index')
-                        ? route('practices.index')
-                        : (Route::has('admin.management.index') ? route('admin.management.index', 'practices') : '#');
-                    $isPracticesActive = request()->route('resource') === 'practices' || request()->routeIs('practices.*');
-                ?>
-                <a href="<?php echo e($practicesUrl); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e($isPracticesActive ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e($isPracticesActive ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Prácticas</span>
-                </a>
+            <?php $__currentLoopData = $menu; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$sectionTitle, $visible, $items]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php if(! $visible) continue; ?>
 
-                <?php
-                    $careersUrl = Route::has('careers.index')
-                        ? route('careers.index')
-                        : (Route::has('admin.management.index') ? route('admin.management.index', 'careers') : '#');
-                    $isCareersActive = request()->route('resource') === 'careers' || request()->routeIs('careers.*');
-                ?>
-                <a href="<?php echo e($careersUrl); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e($isCareersActive ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e($isCareersActive ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
-                        </path>
-                    </svg>
-                    <span>Carreras</span>
-                </a>
+                <p class="px-3 pt-4 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <?php echo e($sectionTitle); ?>
 
-                <?php
-                    $adminResources = [
-                        'coordinators' => 'Coordinadores',
-                        'students' => 'Estudiantes',
-                        'companies' => 'Empresas',
-                        'offers' => 'Ofertas',
-                        'applications' => 'Postulaciones',
-                    ];
-                ?>
+                </p>
 
-                <?php $__currentLoopData = $adminResources; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resKey => $resLabel): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$routeName, $label, $icon]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <?php
-                        $itemUrl = Route::has($resKey . '.index')
-                            ? route($resKey . '.index')
-                            : (Route::has('admin.management.index') ? route('admin.management.index', $resKey) : '#');
-                        $isItemActive = request()->route('resource') === $resKey || request()->routeIs($resKey . '.*');
+                        $baseName = \Illuminate\Support\Str::beforeLast($routeName, '.');
+                        $isActive = request()->routeIs($routeName) || ($routeName !== 'dashboard' && request()->routeIs($baseName.'.*'));
                     ?>
-                    <a href="<?php echo e($itemUrl); ?>"
-                        class="block rounded-lg px-3 py-2 text-sm font-medium <?php echo e($isItemActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                        <?php echo e($resLabel); ?>
-
+                    <a href="<?php echo e(Route::has($routeName) ? route($routeName) : '#'); ?>"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <?php echo e($isActive ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
+                        <svg class="w-5 h-5 shrink-0 <?php echo e($isActive ? 'text-white' : 'text-slate-500'); ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<?php echo e($icons[$icon]); ?>"></path>
+                        </svg>
+                        <span class="leading-tight"><?php echo e($label); ?></span>
                     </a>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-            <?php endif; ?>
-
-            <?php if((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Coordinador')): ?>
-                <div role="presentation"
-                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Coordinador
-                </div>
-                <?php
-                    $coordAppsUrl = Route::has('coordinator.applications.index')
-                        ? route('coordinator.applications.index')
-                        : (Route::has('coordinator.management.index') ? route('coordinator.management.index', 'applications') : '#');
-                ?>
-                <a href="<?php echo e($coordAppsUrl); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e(request()->route('resource') === 'applications' ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e(request()->route('resource') === 'applications' ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                        </path>
-                    </svg>
-                    <span class="leading-tight">Postulaciones</span>
-                </a>
-                <a href="<?php echo e(Route::has('coordinator.offers.index') ? route('coordinator.offers.index') : (Route::has('coordinator.management.index') ? route('coordinator.management.index', 'offers') : '#')); ?>"
-                    class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Aprobar ofertas</a>
-                <a href="<?php echo e(Route::has('coordinator.practices.index') ? route('coordinator.practices.index') : (Route::has('coordinator.management.index') ? route('coordinator.management.index', 'practices') : '#')); ?>"
-                    class="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Prácticas</a>
-            <?php endif; ?>
-
-            <?php if((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Estudiante')): ?>
-                <div role="presentation"
-                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Estudiante
-                </div>
-                <a href="<?php echo e(Route::has('student.offers.view') ? route('student.offers.view') : '#'); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e(request()->routeIs('student.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e(request()->routeIs('student.offers*') ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <span>Explorar Ofertas</span>
-                </a>
-                <a href="<?php echo e(Route::has('student.applications.view') ? route('student.applications.view') : '#'); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e(request()->routeIs('student.applications*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e(request()->routeIs('student.applications*') ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                        </path>
-                    </svg>
-                    <span>Mis postulaciones</span>
-                </a>
-            <?php endif; ?>
-
-            <?php if((app()->environment('local') && config('app.demo_mode')) || auth()->user()?->hasRole('Empresa')): ?>
-                <div role="presentation"
-                    class="pointer-events-none select-none px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Empresa
-                </div>
-                <a href="<?php echo e(Route::has('company.offers.view') ? route('company.offers.view') : '#'); ?>"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-200 <?php echo e(request()->routeIs('company.offers*') ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
-                    <svg class="w-5 h-5 shrink-0 <?php echo e(request()->routeIs('company.offers*') ? 'text-white' : 'text-slate-500'); ?>"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Publicar Oferta</span>
-                </a>
-            <?php endif; ?>
-
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </nav>
     </aside>
 
@@ -318,6 +263,125 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        /*
+         | Funciones compartidas por todos los mantenedores (carreras, empresas, ofertas, etc.).
+         */
+
+        // Abre y cierra los modales del componente form-modal.
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Clic fuera del cuadro o tecla Escape cierran el modal.
+        document.addEventListener('click', (event) => {
+            if (event.target.classList?.contains('app-modal')) closeModal(event.target.id);
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.app-modal.flex').forEach((modal) => closeModal(modal.id));
+            }
+        });
+
+        // Abre un modal de "crear" con el formulario limpio.
+        function openCreateModal(id) {
+            const form = document.querySelector(`#${id} form`);
+            if (form && !document.querySelector(`#${id} [data-form-errors]`)) form.reset();
+            openModal(id);
+        }
+
+        // Abre un modal de "editar": cambia la URL del formulario y rellena los campos con los datos de la fila.
+        function openEditModal(id, actionUrl, data, subtitle = null) {
+            const modal = document.getElementById(id);
+            const form = modal.querySelector('form');
+            form.action = actionUrl;
+            form.querySelector('[name="_action"]').value = actionUrl;
+            modal.querySelector('[data-form-errors]')?.remove();
+            fillForm(form, data);
+            const subtitleElement = modal.querySelector('[data-modal-subtitle]');
+            if (subtitle && subtitleElement) subtitleElement.textContent = subtitle;
+            openModal(id);
+        }
+
+        // Pone cada valor de "data" en el campo del formulario que tiene el mismo name.
+        function fillForm(form, data) {
+            [...form.elements].forEach((input) => {
+                if (!input.name || input.type === 'hidden') return;
+                const key = input.name.replace('[]', '');
+                if (!(key in data)) return;
+                const value = data[key];
+
+                if (input.type === 'checkbox' && input.name.endsWith('[]')) {
+                    input.checked = (value ?? []).map(String).includes(input.value);
+                } else if (input.type === 'checkbox') {
+                    input.checked = Boolean(value);
+                } else {
+                    input.value = value ?? '';
+                }
+            });
+        }
+
+        // Muestra datos en un modal de detalle: cada elemento con data-show="campo" recibe ese valor.
+        function openShowModal(id, data) {
+            document.querySelectorAll(`#${id} [data-show]`).forEach((element) => {
+                const value = data[element.dataset.show];
+                element.textContent = (value === null || value === undefined || value === '') ? '—' : value;
+            });
+            openModal(id);
+        }
+
+        // Activa DataTables sobre una tabla ya escrita en Blade y la conecta al buscador propio.
+        function initDataTable(tableSelector, searchSelector, options = {}) {
+            const table = $(tableSelector).DataTable(Object.assign({
+                dom: 'rtip',
+                pageLength: 10,
+                columnDefs: [{ targets: -1, orderable: false, searchable: false }],
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
+            }, options));
+
+            document.querySelector(searchSelector)?.addEventListener('input', (event) => {
+                table.search(event.target.value).draw();
+            });
+
+            return table;
+        }
+
+        // Pide confirmación con SweetAlert2 y, si se acepta, envía el formulario indicado.
+        function confirmSubmit(formId, { title, text, confirmText = 'Confirmar', color = '#C8102E', icon = 'warning' }) {
+            Swal.fire({
+                title,
+                text,
+                icon,
+                showCancelButton: true,
+                confirmButtonColor: color,
+                cancelButtonColor: '#64748b',
+                confirmButtonText: confirmText,
+                cancelButtonText: 'Cancelar',
+            }).then((result) => {
+                if (result.isConfirmed) document.getElementById(formId).submit();
+            });
+        }
+
+        // Si un formulario volvió con errores de validación, se reabre su modal con lo escrito.
+        <?php if($errors->any() && old('_modal')): ?>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modal = document.getElementById(<?php echo \Illuminate\Support\Js::from(old('_modal'))->toHtml() ?>);
+                if (!modal) return;
+                const form = modal.querySelector('form');
+                if (form && <?php echo \Illuminate\Support\Js::from(old('_action'))->toHtml() ?>) form.action = <?php echo \Illuminate\Support\Js::from(old('_action'))->toHtml() ?>;
+                openModal(modal.id);
+            });
+        <?php endif; ?>
+    </script>
+
     <?php echo $__env->yieldPushContent('scripts'); ?>
 
     <!-- Disparadores globales de SweetAlert2 para mensajes Flash de Laravel -->

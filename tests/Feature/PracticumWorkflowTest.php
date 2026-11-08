@@ -35,7 +35,7 @@ class PracticumWorkflowTest extends TestCase
         $applicant->assignRole($studentRole);
         $this->createStudent($applicant, $career, 10002);
 
-        $response = $this->actingAs($applicant)->post('/applications', [
+        $response = $this->actingAs($applicant)->post('/student/applications', [
             'offer_id' => $offer->id,
             'cv' => UploadedFile::fake()->create('curriculum.pdf', 100, 'application/pdf'),
             'carta_motivacion' => 'Quiero aportar al equipo de desarrollo.',
@@ -63,7 +63,7 @@ class PracticumWorkflowTest extends TestCase
         $student = $this->createStudent($studentUser, $studentCareer, 10003);
         $application = $this->createStudentApplication($student, $offer);
 
-        $response = $this->actingAs($coordinator)->post('/coordinator/applications/'.$application->id.'/assign');
+        $response = $this->actingAs($coordinator)->post('/applications/'.$application->id.'/assign');
 
         $response->assertForbidden();
         $this->assertDatabaseMissing('practices', ['application_id' => $application->id]);
@@ -83,9 +83,9 @@ class PracticumWorkflowTest extends TestCase
         $offer = $this->createOffer($company, $career, 1);
         $application = $this->createStudentApplication($student, $offer);
 
-        $response = $this->actingAs($coordinator)->post('/coordinator/applications/'.$application->id.'/assign');
+        $response = $this->actingAs($coordinator)->post('/applications/'.$application->id.'/assign');
 
-        $response->assertCreated();
+        $response->assertRedirect()->assertSessionHas('success');
         $this->assertDatabaseHas('practices', ['application_id' => $application->id, 'estado' => 'Asignado']);
         $this->assertSame('Asignado', $application->refresh()->status);
     }
@@ -103,6 +103,31 @@ class PracticumWorkflowTest extends TestCase
         $this->assertDatabaseHas('offers', ['titulo' => 'Desarrollador Backend Laravel']);
         $this->assertDatabaseHas('applications', ['status' => 'Postulado']);
         $this->assertDatabaseHas('practices', ['estado' => 'Asignado']);
+    }
+
+    public function test_admin_can_open_every_management_page(): void
+    {
+        Storage::fake('local');
+        $this->withoutVite();
+        $this->seed();
+        $admin = User::where('email', 'admin@ucsc.cl')->firstOrFail();
+
+        foreach (['/careers', '/coordinators', '/students', '/companies', '/offers', '/applications', '/practices'] as $url) {
+            $this->actingAs($admin)->get($url)->assertOk();
+        }
+    }
+
+    public function test_coordinator_can_open_their_pages_but_not_admin_ones(): void
+    {
+        Storage::fake('local');
+        $this->withoutVite();
+        $this->seed();
+        $coordinator = User::where('email', 'coordinador@ucsc.cl')->firstOrFail();
+
+        $this->actingAs($coordinator)->get('/applications')->assertOk();
+        $this->actingAs($coordinator)->get('/practices')->assertOk();
+        $this->actingAs($coordinator)->get('/offers')->assertOk();
+        $this->actingAs($coordinator)->get('/companies')->assertForbidden();
     }
 
     private function createCareer(string $code, float $supervisorWeight = 60, float $coordinatorWeight = 40): Career

@@ -50,60 +50,57 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware($administratorMiddleware)
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('management/{resource}', [ManagementPageController::class, 'index'])->name('management.index');
-        Route::get('careers/view', fn () => redirect()->route('admin.management.index', 'careers'))->name('careers.view');
+$staffMiddleware = app()->environment('local') && config('app.demo_mode')
+    ? [UseLocalDemoUser::class]
+    : ['auth', 'verified', 'role:Administrador|Super Administrador|Coordinador'];
+$offersMiddleware = app()->environment('local') && config('app.demo_mode')
+    ? [UseLocalDemoUser::class]
+    : ['auth', 'role:Administrador|Super Administrador|Coordinador|Empresa'];
 
-        Route::get('careers/options', [CareerController::class, 'options'])->name('careers.options');
-        Route::apiResource('careers', CareerController::class)->except('show');
-        Route::apiResource('offers', OfferController::class)->except('show');
-        Route::apiResource('coordinators', CoordinatorController::class)->except('show');
-        Route::apiResource('companies', CompanyController::class)->except('show');
-        Route::apiResource('students', StudentController::class)->except('show');
-        Route::apiResource('applications', ApplicationController::class)->only(['index', 'update', 'destroy']);
-        Route::apiResource('practices', PracticeController::class)->except('show');
-        Route::post('offers/{offer}/approve', [OfferController::class, 'approve'])->name('offers.approve');
-        Route::post('applications/{application}/assign', [ApplicationController::class, 'assign'])->name('applications.assign');
-        Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
-        Route::post('practices/{practice}/transition', [PracticeController::class, 'transition'])->name('practices.transition');
-    });
+/*
+ | Mantenedores (sin prefijo /admin). Cada módulo tiene su controlador y su vista.
+ */
 
-Route::middleware(['auth', 'verified', 'role:Coordinador'])
-    ->prefix('coordinator')
-    ->name('coordinator.')
-    ->group(function () {
-        Route::get('management/{resource}', [ManagementPageController::class, 'index'])->name('management.index');
-        Route::get('offers', [OfferController::class, 'index'])->name('offers.index');
-        Route::post('offers/{offer}/approve', [OfferController::class, 'approve'])->name('offers.approve');
-        Route::apiResource('applications', ApplicationController::class)->only(['index', 'update', 'destroy']);
-        Route::post('applications/{application}/assign', [ApplicationController::class, 'assign'])->name('applications.assign');
-        Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
-        Route::apiResource('practices', PracticeController::class)->except('show');
-        Route::post('practices/{practice}/transition', [PracticeController::class, 'transition'])->name('practices.transition');
-    });
+// Solo Administrador y Super Administrador
+Route::middleware($administratorMiddleware)->group(function () {
+    Route::get('careers/options', [CareerController::class, 'options'])->name('careers.options');
+    Route::resource('careers', CareerController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('coordinators', CoordinatorController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['coordinators' => 'coordinator']);
+    Route::resource('students', StudentController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('companies', CompanyController::class)->only(['index', 'store', 'update', 'destroy']);
+});
 
-Route::middleware(['auth', 'role:Empresa|Administrador|Super Administrador'])
-    ->prefix('company')
-    ->name('company.')
-    ->group(function () {
-        Route::get('offers', [ManagementPageController::class, 'companyOffers'])->name('offers.view');
-        Route::get('offers/data', [OfferController::class, 'index'])->name('offers.data');
-        Route::post('offers', [OfferController::class, 'store'])->name('offers.store');
-        Route::put('offers/{offer}', [OfferController::class, 'update'])->name('offers.update');
-        Route::delete('offers/{offer}', [OfferController::class, 'destroy'])->name('offers.destroy');
-    });
+// Administración y Coordinador (el coordinador solo ve lo de su carrera)
+Route::middleware($staffMiddleware)->group(function () {
+    Route::get('applications', [ApplicationController::class, 'index'])->name('applications.index');
+    Route::post('applications/{application}/assign', [ApplicationController::class, 'assign'])->name('applications.assign');
+    Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
+    Route::delete('applications/{application}', [ApplicationController::class, 'destroy'])->name('applications.destroy');
 
+    Route::resource('practices', PracticeController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::post('practices/{practice}/transition', [PracticeController::class, 'transition'])->name('practices.transition');
+
+    Route::post('offers/{offer}/approve', [OfferController::class, 'approve'])->name('offers.approve');
+});
+
+// Ofertas: Administración, Coordinador (aprueba) y Empresa (publica las suyas)
+Route::middleware($offersMiddleware)->group(function () {
+    Route::resource('offers', OfferController::class)->only(['index', 'store', 'update', 'destroy']);
+});
+
+// Área estudiante
 Route::middleware(['auth', 'role:Estudiante'])
+    ->prefix('student')
+    ->name('student.')
     ->group(function () {
-        Route::get('offers', [ManagementPageController::class, 'studentOffers'])->name('student.offers.view');
-        Route::get('offers/data', [OfferController::class, 'index'])->name('student.offers.data');
-        Route::get('student/applications', [ApplicationController::class, 'index'])->name('student.applications.index');
-        Route::get('student/my-applications', [ManagementPageController::class, 'studentApplications'])->name('student.applications.view');
+        Route::get('offers', [ManagementPageController::class, 'studentOffers'])->name('offers.view');
+        Route::get('offers/data', [OfferController::class, 'studentData'])->name('offers.data');
+        Route::get('my-applications', [ManagementPageController::class, 'studentApplications'])->name('applications.view');
+        Route::get('applications', [ApplicationController::class, 'studentData'])->name('applications.index');
         Route::post('applications', [ApplicationController::class, 'store'])->name('applications.store');
-        Route::delete('applications/{application}', [ApplicationController::class, 'destroy'])->name('applications.destroy');
+        Route::delete('applications/{application}', [ApplicationController::class, 'studentDestroy'])->name('applications.destroy');
     });
 
 Route::middleware('auth')->group(function () {

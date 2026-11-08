@@ -2,57 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\CoordinatorRequest;
 use App\Models\Career;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 
-/**
- * Para conectar la tabla real de coordinadores: cambiar la consulta en index()
- * y el método format(). La búsqueda, el orden y la paginación no se tocan.
- */
 class CoordinatorController extends Controller
 {
-    use HasDataTable;
-
     private const ROLE = 'Coordinador';
 
-    public function index(Request $request): JsonResponse
+    /**
+     * Mantenedor de coordinadores: usuarios con rol Coordinador y su carrera.
+     */
+    public function index(): View
     {
-        return $this->dataTableResponse(
-            $request,
-            User::role(self::ROLE)->with('career:id,nombre'),
-            searchable: ['name', 'email', 'telefono'],
-            sortable: [
-                'id' => 'id',
-                'nombre' => 'name',
-                'correo' => 'email',
-                'telefono' => 'telefono',
-                'carrera' => fn ($q, $dir) => $q->orderBy(
-                    Career::select('nombre')->whereColumn('careers.id', 'users.career_id'),
-                    $dir
-                ),
-            ],
-            transform: fn (User $u) => $this->format($u),
-            defaultSort: 'id',
-            defaultDir: 'desc',
-            extraSearch: fn ($q, $like) => $q->orWhereHas(
-                'career',
-                fn ($c) => $c->where('nombre', 'like', $like)
-            ),
-        );
+        $coordinators = User::role(self::ROLE)
+            ->with('career:id,codigo,nombre')
+            ->orderBy('name')
+            ->get();
+
+        $counts = [
+            'total' => $coordinators->count(),
+            'carreras' => $coordinators->pluck('career_id')->filter()->unique()->count(),
+            'sin_carrera' => $coordinators->whereNull('career_id')->count(),
+        ];
+
+        $careers = Career::query()->orderBy('nombre')->get(['id', 'codigo', 'nombre']);
+
+        return view('coordinators.index', compact('coordinators', 'counts', 'careers'));
     }
 
-    public function store(CoordinatorRequest $request): JsonResponse
+    public function store(CoordinatorRequest $request): RedirectResponse
     {
         $data = $request->validated();
 
         $user = User::create([
             'name' => $data['nombre'],
+            'last_name' => $data['apellido'] ?? null,
             'email' => $data['correo'],
             'telefono' => $data['telefono'] ?? null,
             'career_id' => $data['career_id'],
@@ -60,46 +48,35 @@ class CoordinatorController extends Controller
         ]);
         $user->assignRole(self::ROLE);
 
-        return response()->json($this->format($user->load('career:id,nombre')), 201);
+        return back()->with('success', "Coordinador «{$user->name}» registrado correctamente.");
     }
 
-    public function update(CoordinatorRequest $request, User $coordinator): JsonResponse
+    public function update(CoordinatorRequest $request, User $coordinator): RedirectResponse
     {
         $this->ensureCoordinator($coordinator);
         $data = $request->validated();
 
         $coordinator->update([
             'name' => $data['nombre'],
+            'last_name' => $data['apellido'] ?? null,
             'email' => $data['correo'],
             'telefono' => $data['telefono'] ?? null,
             'career_id' => $data['career_id'],
         ]);
 
-        return response()->json($this->format($coordinator->load('career:id,nombre')));
+        return back()->with('success', "Coordinador «{$coordinator->name}» actualizado correctamente.");
     }
 
-    public function destroy(User $coordinator): Response
+    public function destroy(User $coordinator): RedirectResponse
     {
         $this->ensureCoordinator($coordinator);
         $coordinator->delete();
 
-        return response()->noContent();
+        return back()->with('success', "Coordinador «{$coordinator->name}» eliminado correctamente.");
     }
 
     private function ensureCoordinator(User $user): void
     {
         abort_unless($user->hasRole(self::ROLE), 404);
-    }
-
-    private function format(User $u): array
-    {
-        return [
-            'id' => $u->id,
-            'nombre' => $u->name,
-            'correo' => $u->email,
-            'telefono' => $u->telefono,
-            'career_id' => $u->career_id,
-            'carrera' => $u->career?->nombre,
-        ];
     }
 }

@@ -2,37 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\CareerRequest;
 use App\Models\Career;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Http\RedirectResponse;
 
 class CareerController extends Controller
 {
-    use HasDataTable;
-
-    public function index(Request $request): JsonResponse
+    /**
+     * Muestra el mantenedor de carreras con sus totales.
+     */
+    public function index(): View
     {
-        return $this->dataTableResponse(
-            $request,
-            Career::query(),
-            searchable: ['nombre', 'codigo'],
-            sortable: [
-                'id' => 'id',
-                'nombre' => 'nombre',
-                'codigo' => 'codigo',
-                'supervisor' => 'supervisor',
-                'coordinador' => 'coordinador',
-                'activa' => 'activa',
-            ],
-            transform: fn (Career $c) => $this->format($c),
-            defaultSort: 'id',
-            defaultDir: 'desc',
-        );
+        $careers = Career::query()
+            ->withCount(['students', 'offers', 'users'])
+            ->orderBy('nombre')
+            ->get();
+
+        $counts = [
+            'total' => $careers->count(),
+            'activas' => $careers->where('activa', true)->count(),
+            'inactivas' => $careers->where('activa', false)->count(),
+        ];
+
+        return view('careers.index', compact('careers', 'counts'));
     }
 
+    /**
+     * Lista simple de carreras para selects de otros módulos.
+     */
     public function options(): JsonResponse
     {
         return response()->json(
@@ -40,36 +39,41 @@ class CareerController extends Controller
         );
     }
 
-    public function store(CareerRequest $request): JsonResponse
+    public function store(CareerRequest $request): RedirectResponse
     {
         $career = Career::create($request->validated());
 
-        return response()->json($this->format($career), 201);
+        return redirect()
+            ->route('careers.index')
+            ->with('success', "Carrera «{$career->nombre}» creada correctamente.");
     }
 
-    public function update(CareerRequest $request, Career $career): JsonResponse
+    public function update(CareerRequest $request, Career $career): RedirectResponse
     {
         $career->update($request->validated());
 
-        return response()->json($this->format($career));
+        return redirect()
+            ->route('careers.index')
+            ->with('success', "Carrera «{$career->nombre}» actualizada correctamente.");
     }
 
-    public function destroy(Career $career): Response
+    /**
+     * Elimina la carrera solo si no tiene estudiantes, ofertas ni usuarios asociados.
+     */
+    public function destroy(Career $career): RedirectResponse
     {
+        $career->loadCount(['students', 'offers', 'users']);
+
+        if ($career->students_count > 0 || $career->offers_count > 0 || $career->users_count > 0) {
+            return redirect()
+                ->route('careers.index')
+                ->with('error', "No se puede eliminar «{$career->nombre}» porque tiene {$career->students_count} estudiante(s), {$career->offers_count} oferta(s) y {$career->users_count} usuario(s) asociados. Puedes marcarla como inactiva.");
+        }
+
         $career->delete();
 
-        return response()->noContent();
-    }
-
-    private function format(Career $c): array
-    {
-        return [
-            'id' => $c->id,
-            'nombre' => $c->nombre,
-            'codigo' => $c->codigo,
-            'supervisor' => (float) $c->supervisor,
-            'coordinador' => (float) $c->coordinador,
-            'activa' => (bool) $c->activa,
-        ];
+        return redirect()
+            ->route('careers.index')
+            ->with('success', "Carrera «{$career->nombre}» eliminada correctamente.");
     }
 }

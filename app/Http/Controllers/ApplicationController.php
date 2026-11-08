@@ -9,12 +9,13 @@ use App\Models\Offer;
 use App\Models\Practice;
 use App\Models\Student;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -22,22 +23,53 @@ class ApplicationController extends Controller
 {
     use HasDataTable;
 
-    public function index(Request $request): JsonResponse
+    /**
+     * Postulaciones para Administrador (todas) y Coordinador (solo las de su carrera).
+     */
+    public function index(Request $request): View
     {
-        $query = Application::query()->with([
-            'student.user:id,name,last_name,email',
-            'student.career:id,nombre',
-            'offer.company:id,razon_social',
-        ]);
-
         $user = $request->user();
-        if ($user?->hasRole('Estudiante')) {
-            $query->whereHas('student', fn (Builder $student) => $student->where('user_id', $user->id));
-        } elseif ($user?->hasRole('Empresa')) {
-            $query->whereHas('offer.company', fn (Builder $company) => $company->where('owner_user_id', $user->id));
-        } elseif ($user?->hasRole('Coordinador')) {
+
+        $query = Application::query()
+            ->with([
+                'student.user:id,name,last_name,email',
+                'student.career:id,codigo,nombre',
+                'offer:id,titulo,empresa,empresa_id,vacantes',
+                'offer.company:id,razon_social',
+                'practice:id,application_id',
+            ])
+            ->orderByDesc('matching_score');
+
+        if ($user?->hasRole('Coordinador')) {
             $query->whereHas('student', fn (Builder $student) => $student->where('career_id', $user->career_id));
         }
+
+        $applications = $query->get();
+
+        $counts = [
+            'total' => $applications->count(),
+            'postuladas' => $applications->where('status', 'Postulado')->count(),
+            'asignadas' => $applications->whereNotIn('status', ['Postulado', 'Rechazado'])->count(),
+            'rechazadas' => $applications->where('status', 'Rechazado')->count(),
+        ];
+
+        $canDelete = (bool) $user?->hasAnyRole(['Administrador', 'Super Administrador']);
+
+        return view('applications.index', compact('applications', 'counts', 'canDelete'));
+    }
+
+    /**
+     * Datos en JSON para la vista "Mis postulaciones" del estudiante.
+     */
+    public function studentData(Request $request): JsonResponse
+    {
+        $query = Application::query()
+            ->with([
+                'student.user:id,name,last_name,email',
+                'student.career:id,nombre',
+                'offer.company:id,razon_social',
+            ])
+            ->whereHas('student', fn (Builder $student) => $student->where('user_id', $request->user()->id));
 
         return $this->dataTableResponse(
             $request,
@@ -50,10 +82,9 @@ class ApplicationController extends Controller
                 'created_at' => 'created_at',
             ],
             transform: fn (Application $application) => $this->format($application),
-            defaultSort: 'matching_score',
+            defaultSort: 'created_at',
             defaultDir: 'desc',
             extraSearch: fn ($query, $like) => $query
-                ->orWhereHas('student.user', fn ($student) => $student->where('name', 'like', $like)->orWhere('email', 'like', $like))
                 ->orWhereHas('offer', fn ($offer) => $offer->where('titulo', 'like', $like)),
         );
     }
@@ -100,15 +131,22 @@ class ApplicationController extends Controller
         return response()->json($this->format($application), 201);
     }
 
-    public function assign(Request $request, Application $application): JsonResponse
+    /**
+     * Asigna la postulación: la marca como "Asignado" y crea la práctica.
+     */
+    public function assign(Request $request, Application $application): RedirectResponse
     {
-        $practice = DB::transaction(function () use ($request, $application): Practice {
+        $error = DB::transaction(function () use ($request, $application): ?string {
             $application = Application::query()->lockForUpdate()->findOrFail($application->id);
             $offer = Offer::query()->lockForUpdate()->findOrFail($application->offer_id);
             $this->authorizeReview($request, $application);
 
-            abort_unless($application->status === 'Postulado', 409, 'Solo se pueden asignar postulaciones pendientes.');
-            abort_if($offer->applications()->whereHas('practice')->count() >= $offer->vacantes, 409, 'La oferta ya completó sus cupos.');
+            if ($application->status !== 'Postulado') {
+                return 'Solo se pueden asignar postulaciones pendientes.';
+            }
+            if ($offer->applications()->whereHas('practice')->count() >= $offer->vacantes) {
+                return "La oferta «{$offer->titulo}» ya completó sus cupos.";
+            }
 
             $application->update([
                 'status' => 'Asignado',
@@ -116,61 +154,74 @@ class ApplicationController extends Controller
                 'decision_at' => now(),
             ]);
 
-            return Practice::create([
+            Practice::create([
                 'application_id' => $application->id,
                 'assigned_by' => $request->user()->id,
                 'estado' => 'Asignado',
             ]);
+
+            return null;
         });
 
-        return response()->json($practice->load('application.offer.company'), 201);
+        if ($error) {
+            return back()->with('error', $error);
+        }
+
+        return back()->with('success', 'Postulación asignada. La práctica quedó creada en estado «Asignado».');
     }
 
-    public function reject(Request $request, Application $application): JsonResponse
+    public function reject(Request $request, Application $application): RedirectResponse
     {
         $this->authorizeReview($request, $application);
-        abort_unless($application->status === 'Postulado', 409, 'La postulación ya fue resuelta.');
+
+        if ($application->status !== 'Postulado') {
+            return back()->with('error', 'La postulación ya fue resuelta.');
+        }
+
         $application->update([
             'status' => 'Rechazado',
             'reviewed_by' => $request->user()->id,
             'decision_at' => now(),
         ]);
 
-        return response()->json($this->format($application->refresh()->load(['student.user', 'student.career', 'offer.company'])));
+        return back()->with('success', 'Postulación rechazada.');
     }
 
-    public function update(Request $request, Application $application): JsonResponse
+    /**
+     * Eliminación desde administración (solo Administrador).
+     */
+    public function destroy(Request $request, Application $application): RedirectResponse
     {
-        $this->authorizeReview($request, $application);
-        $validated = $request->validate([
-            'estado' => ['required', Rule::in(['Postulado', 'Rechazado'])],
-        ]);
-        abort_unless(in_array($application->status, ['Postulado', 'Rechazado'], true), 409, 'La postulación ya fue asignada y no se puede editar.');
+        abort_unless($request->user()->hasAnyRole(['Administrador', 'Super Administrador']), 403);
 
-        $application->update([
-            'status' => $validated['estado'],
-            'reviewed_by' => $validated['estado'] === 'Rechazado' ? $request->user()->id : null,
-            'decision_at' => $validated['estado'] === 'Rechazado' ? now() : null,
-        ]);
-
-        return response()->json($this->format($application->refresh()->load(['student.user', 'student.career', 'offer.company'])));
-    }
-
-    public function destroy(Request $request, Application $application): Response
-    {
-        $user = $request->user();
-        if ($user->hasRole('Estudiante')) {
-            abort_unless($application->student()->where('user_id', $user->id)->exists(), 404);
-            abort_unless($application->status === 'Postulado', 409, 'No puedes retirar una postulación ya asignada.');
-        } else {
-            abort_unless($user->hasAnyRole(['Administrador', 'Super Administrador']), 403);
+        if ($application->practice()->exists()) {
+            return back()->with('error', 'No se puede eliminar una postulación que ya tiene práctica asignada. Elimina primero la práctica.');
         }
+
+        $this->deleteApplication($application);
+
+        return back()->with('success', 'Postulación eliminada correctamente.');
+    }
+
+    /**
+     * El estudiante retira su propia postulación mientras siga pendiente.
+     */
+    public function studentDestroy(Request $request, Application $application): Response
+    {
+        abort_unless($application->student()->where('user_id', $request->user()->id)->exists(), 404);
+        abort_unless($application->status === 'Postulado', 409, 'No puedes retirar una postulación ya asignada.');
+
+        $this->deleteApplication($application);
+
+        return response()->noContent();
+    }
+
+    private function deleteApplication(Application $application): void
+    {
         if ($application->cv_path) {
             Storage::disk('local')->delete($application->cv_path);
         }
         $application->delete();
-
-        return response()->noContent();
     }
 
     public function cv(Request $request, Application $application): StreamedResponse

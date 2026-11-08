@@ -33,6 +33,11 @@ class Career extends Model
         return $this->hasMany(User::class);
     }
 
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
+
     public function offers(): BelongsToMany
     {
         return $this->belongsToMany(Offer::class);

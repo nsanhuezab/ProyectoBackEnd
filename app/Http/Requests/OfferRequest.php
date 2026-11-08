@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Company;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,6 +32,41 @@ class OfferRequest extends FormRequest
             'habilidades' => ['required', 'array', 'min:1', 'max:30'],
             'habilidades.*' => ['string', 'max:100'],
             'ubicacion' => ['required', 'string', 'max:255'],
+        ];
+    }
+
+    /**
+     * - Las habilidades llegan como texto separado por comas.
+     * - Si quien publica es una Empresa, la oferta siempre queda a nombre de su propia empresa.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('habilidades'))) {
+            $this->merge([
+                'habilidades' => collect(explode(',', $this->input('habilidades')))
+                    ->map(fn (string $skill) => trim($skill))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ]);
+        }
+
+        if ($this->user()?->hasRole('Empresa')) {
+            $this->merge([
+                'empresa_id' => Company::where('owner_user_id', $this->user()->id)->value('id'),
+            ]);
+        }
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'empresa_id' => 'empresa',
+            'career_ids' => 'carreras',
+            'nivel_requerido' => 'nivel requerido',
+            'duracion_semanas' => 'duración',
+            'remuneracion' => 'remuneración',
+            'ubicacion' => 'ubicación',
         ];
     }
 }

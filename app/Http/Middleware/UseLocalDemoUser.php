@@ -11,7 +11,9 @@ use Symfony\Component\HttpFoundation\Response;
 class UseLocalDemoUser
 {
     /**
-     * Handle an incoming request.
+     * Modo demo (solo en local): entra como el primer Administrador de la base de datos
+     * para que los permisos y botones funcionen igual que con una sesión real.
+     * Si todavía no hay administrador (base vacía), usa un usuario de demostración sin guardar.
      *
      * @param  Closure(Request): (Response)  $next
      */
@@ -19,12 +21,13 @@ class UseLocalDemoUser
     {
         abort_unless(app()->environment('local') && config('app.demo_mode'), 404);
 
-        $user = (new User)->forceFill([
-            'id' => 0,
-            'name' => 'Usuario de demostración',
-            'last_name' => 'Local',
-            'email' => 'demo@localhost.test',
-        ]);
+        $user = User::whereHas('roles', fn ($roles) => $roles->where('name', 'Administrador'))->orderBy('id')->first()
+            ?? (new User)->forceFill([
+                'id' => 0,
+                'name' => 'Usuario de demostración',
+                'last_name' => 'Local',
+                'email' => 'demo@localhost.test',
+            ]);
 
         Auth::setUser($user);
         $request->attributes->set('demo_user', true);

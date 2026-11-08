@@ -4,74 +4,74 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\OfferRequest;
+use App\Models\Career;
 use App\Models\Company;
 use App\Models\Offer;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
-/**
- * Para conectar la tabla real de ofertas: cambiar el modelo/consulta en index()
- * y ajustar format(). El resto (búsqueda, orden, paginación) no se toca.
- */
 class OfferController extends Controller
 {
     use HasDataTable;
 
-    public function index(Request $request): JsonResponse
+    /**
+     * Mantenedor de ofertas. La misma vista sirve a tres roles:
+     * - Administrador: ve y gestiona todas, y puede aprobarlas.
+     * - Coordinador: ve las de su carrera y solo puede aprobarlas o rechazarlas.
+     * - Empresa: ve y gestiona solo las suyas.
+     */
+    public function index(Request $request): View
     {
-        $query = Offer::query()->with(['company:id,razon_social', 'careers:id,nombre']);
         $user = $request->user();
+        $isCompany = (bool) $user?->hasRole('Empresa');
+        $ownCompany = $isCompany ? Company::where('owner_user_id', $user->id)->first() : null;
 
-        if ($user?->hasRole('Empresa')) {
-            $query->whereHas('company', fn ($company) => $company->where('owner_user_id', $user->id));
+        $query = Offer::query()
+            ->with(['company:id,razon_social', 'careers:id,codigo,nombre'])
+            ->withCount([
+                'applications',
+                'applications as assigned_count' => fn ($applications) => $applications->whereHas('practice'),
+            ])
+            ->latest();
+
+        if ($isCompany) {
+            $query->where('empresa_id', $ownCompany?->id ?? 0);
         }
         if ($user?->hasRole('Coordinador')) {
             $query->whereHas('careers', fn ($career) => $career->whereKey($user->career_id));
         }
-        if ($request->filled('career_id')) {
-            $query->whereHas('careers', fn ($career) => $career->whereKey($request->integer('career_id')));
-        }
-        if ($request->filled('area')) {
-            $query->where('area', $request->string('area')->toString());
-        }
-        if ($request->filled('modalidad')) {
-            $query->where('modalidad', $request->string('modalidad')->toString());
-        }
-        if ($request->filled('ubicacion')) {
-            $query->where('ubicacion', 'like', '%'.$request->string('ubicacion')->toString().'%');
-        }
-        if ($user?->hasRole('Estudiante')) {
-            $query->where('estado', 'Aprobada');
-        }
 
-        return $this->dataTableResponse(
-            $request,
-            $query,
-            searchable: ['titulo', 'empresa', 'estado'],
-            sortable: [
-                'id' => 'id',
-                'titulo' => 'titulo',
-                'empresa' => 'empresa',
-                'vacantes' => 'vacantes',
-                'estado' => 'estado',
-            ],
-            transform: fn (Offer $o) => $this->format($o),
-            defaultSort: 'id',
-            defaultDir: 'desc',
-            extraSearch: fn ($query, $like) => $query
-                ->orWhereHas('company', fn ($company) => $company->where('razon_social', 'like', $like))
-                ->orWhereHas('careers', fn ($career) => $career->where('nombre', 'like', $like)),
-        );
+        $offers = $query->get();
+
+        $counts = [
+            'total' => $offers->count(),
+            'pendientes' => $offers->where('estado', 'Pendiente')->count(),
+            'aprobadas' => $offers->where('estado', 'Aprobada')->count(),
+            'rechazadas' => $offers->where('estado', 'Rechazada')->count(),
+        ];
+
+        $can = [
+            'manage' => (bool) $user?->hasAnyRole(['Empresa', 'Administrador', 'Super Administrador']),
+            'approve' => (bool) $user?->hasAnyRole(['Administrador', 'Super Administrador', 'Coordinador']),
+            'chooseCompany' => ! $isCompany,
+        ];
+
+        $companies = $isCompany ? collect() : Company::query()->orderBy('razon_social')->get(['id', 'razon_social']);
+        $careers = Career::query()->where('activa', true)->orderBy('nombre')->get(['id', 'codigo', 'nombre']);
+
+        return view('offers.index', compact('offers', 'counts', 'can', 'companies', 'careers', 'isCompany', 'ownCompany'));
     }
 
-    public function store(OfferRequest $request): JsonResponse
+    public function store(OfferRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $company = $this->companyFor($request, $data['empresa_id']);
+        $company = $this->companyFor($request, (int) $data['empresa_id']);
+
         $offer = DB::transaction(function () use ($request, $data, $company): Offer {
             $offer = Offer::create(array_merge(
                 Arr::except($data, ['career_ids', 'empresa']),
@@ -83,17 +83,17 @@ class OfferController extends Controller
             ));
             $offer->careers()->sync($data['career_ids']);
 
-            return $offer->load(['company', 'careers']);
+            return $offer;
         });
 
-        return response()->json($this->format($offer), 201);
+        return back()->with('success', "Oferta «{$offer->titulo}» creada. Queda pendiente de aprobación.");
     }
 
-    public function update(OfferRequest $request, Offer $offer): JsonResponse
+    public function update(OfferRequest $request, Offer $offer): RedirectResponse
     {
-        $data = $request->validated();
-        $company = $this->companyFor($request, $data['empresa_id']);
         $this->authorizeOfferManagement($request, $offer);
+        $data = $request->validated();
+        $company = $this->companyFor($request, (int) $data['empresa_id']);
 
         DB::transaction(function () use ($data, $company, $offer): void {
             $offer->update(array_merge(
@@ -108,31 +108,86 @@ class OfferController extends Controller
             $offer->careers()->sync($data['career_ids']);
         });
 
-        return response()->json($this->format($offer->refresh()->load(['company', 'careers'])));
+        return back()->with('success', "Oferta «{$offer->titulo}» actualizada. Vuelve a quedar pendiente de aprobación.");
     }
 
-    public function destroy(Request $request, Offer $offer): Response
+    public function destroy(Request $request, Offer $offer): RedirectResponse
     {
         $this->authorizeOfferManagement($request, $offer);
-        abort_if($offer->applications()->exists(), 409, 'No puedes eliminar una oferta con postulaciones.');
+
+        $applications = $offer->applications()->count();
+        if ($applications > 0) {
+            return back()->with('error', "No se puede eliminar «{$offer->titulo}» porque tiene {$applications} postulación(es).");
+        }
+
         $offer->delete();
 
-        return response()->noContent();
+        return back()->with('success', "Oferta «{$offer->titulo}» eliminada correctamente.");
     }
 
-    public function approve(Request $request, Offer $offer): JsonResponse
+    /**
+     * Aprueba o rechaza una oferta (Administrador o Coordinador de una de sus carreras).
+     */
+    public function approve(Request $request, Offer $offer): RedirectResponse
     {
         $this->authorizeOfferApproval($request, $offer);
         $validated = $request->validate([
             'estado' => ['required', Rule::in(['Aprobada', 'Rechazada'])],
         ]);
+
         $offer->update([
             'estado' => $validated['estado'],
             'approved_by' => $request->user()->id,
             'approved_at' => $validated['estado'] === 'Aprobada' ? now() : null,
         ]);
 
-        return response()->json($this->format($offer->refresh()->load(['company', 'careers'])));
+        $message = $validated['estado'] === 'Aprobada'
+            ? "Oferta «{$offer->titulo}» aprobada. Ya es visible para los estudiantes."
+            : "Oferta «{$offer->titulo}» rechazada.";
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Datos en JSON para la vista "Explorar ofertas" del estudiante (solo ofertas aprobadas).
+     */
+    public function studentData(Request $request): JsonResponse
+    {
+        $query = Offer::query()
+            ->with(['company:id,razon_social', 'careers:id,nombre'])
+            ->where('estado', 'Aprobada');
+
+        if ($request->filled('career_id')) {
+            $query->whereHas('careers', fn ($career) => $career->whereKey($request->integer('career_id')));
+        }
+        if ($request->filled('area')) {
+            $query->where('area', $request->string('area')->toString());
+        }
+        if ($request->filled('modalidad')) {
+            $query->where('modalidad', $request->string('modalidad')->toString());
+        }
+        if ($request->filled('ubicacion')) {
+            $query->where('ubicacion', 'like', '%'.$request->string('ubicacion')->toString().'%');
+        }
+
+        return $this->dataTableResponse(
+            $request,
+            $query,
+            searchable: ['titulo', 'empresa', 'estado'],
+            sortable: [
+                'id' => 'id',
+                'titulo' => 'titulo',
+                'empresa' => 'empresa',
+                'vacantes' => 'vacantes',
+                'estado' => 'estado',
+            ],
+            transform: fn (Offer $offer) => $this->format($offer),
+            defaultSort: 'id',
+            defaultDir: 'desc',
+            extraSearch: fn ($query, $like) => $query
+                ->orWhereHas('company', fn ($company) => $company->where('razon_social', 'like', $like))
+                ->orWhereHas('careers', fn ($career) => $career->where('nombre', 'like', $like)),
+        );
     }
 
     private function companyFor(Request $request, int $companyId): Company
@@ -147,10 +202,7 @@ class OfferController extends Controller
 
     private function authorizeOfferManagement(Request $request, Offer $offer): void
     {
-        abort_unless(
-            $request->user()->hasAnyRole(['Empresa', 'Administrador', 'Super Administrador']),
-            403
-        );
+        abort_unless($request->user()->hasAnyRole(['Empresa', 'Administrador', 'Super Administrador']), 403);
         if ($request->user()->hasRole('Empresa')) {
             abort_unless($offer->company?->owner_user_id === $request->user()->id, 403);
         }
@@ -164,26 +216,29 @@ class OfferController extends Controller
         }
     }
 
-    private function format(Offer $o): array
+    /**
+     * @return array<string, mixed>
+     */
+    private function format(Offer $offer): array
     {
         return [
-            'id' => $o->id,
-            'titulo' => $o->titulo,
-            'empresa' => $o->empresa,
-            'empresa_id' => $o->empresa_id,
-            'vacantes' => (int) $o->vacantes,
-            'estado' => $o->estado,
-            'area' => $o->area,
-            'perfil' => $o->perfil,
-            'nivel_requerido' => $o->nivel_requerido,
-            'modalidad' => $o->modalidad,
-            'duracion_semanas' => $o->duracion_semanas,
-            'horario' => $o->horario,
-            'remuneracion' => $o->remuneracion,
-            'habilidades' => $o->habilidades ?? [],
-            'ubicacion' => $o->ubicacion,
-            'career_ids' => $o->careers->pluck('id')->all(),
-            'carreras' => $o->careers->pluck('nombre')->all(),
+            'id' => $offer->id,
+            'titulo' => $offer->titulo,
+            'empresa' => $offer->empresa,
+            'empresa_id' => $offer->empresa_id,
+            'vacantes' => (int) $offer->vacantes,
+            'estado' => $offer->estado,
+            'area' => $offer->area,
+            'perfil' => $offer->perfil,
+            'nivel_requerido' => $offer->nivel_requerido,
+            'modalidad' => $offer->modalidad,
+            'duracion_semanas' => $offer->duracion_semanas,
+            'horario' => $offer->horario,
+            'remuneracion' => $offer->remuneracion,
+            'habilidades' => $offer->habilidades ?? [],
+            'ubicacion' => $offer->ubicacion,
+            'career_ids' => $offer->careers->pluck('id')->all(),
+            'carreras' => $offer->careers->pluck('nombre')->all(),
         ];
     }
 }

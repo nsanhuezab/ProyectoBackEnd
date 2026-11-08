@@ -2,68 +2,85 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\PracticeRequest;
 use App\Models\Application;
 use App\Models\Offer;
 use App\Models\Practice;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class PracticeController extends Controller
 {
-    use HasDataTable;
+    /**
+     * Flujo de estados de una práctica: cada estado solo puede avanzar al siguiente.
+     */
+    public const STATES = ['Asignado', 'En Curso', 'Informe Entregado', 'Finalizada'];
 
-    public function index(Request $request): JsonResponse
+    /**
+     * Prácticas para Administrador (todas) y Coordinador (solo las de su carrera).
+     */
+    public function index(Request $request): View
     {
-        $query = Practice::query()->with([
-            'application.student.user:id,name,last_name',
-            'application.student.career:id,nombre',
-            'application.offer.company:id,razon_social',
-        ]);
         $user = $request->user();
+        $isCoordinator = (bool) $user?->hasRole('Coordinador');
+        $byCareer = fn (Builder $student) => $student->where('career_id', $user->career_id);
 
-        if ($user?->hasRole('Estudiante')) {
-            $query->whereHas('application.student', fn (Builder $student) => $student->where('user_id', $user->id));
-        } elseif ($user?->hasRole('Empresa')) {
-            $query->whereHas('application.offer.company', fn (Builder $company) => $company->where('owner_user_id', $user->id));
-        } elseif ($user?->hasRole('Coordinador')) {
-            $query->whereHas('application.student', fn (Builder $student) => $student->where('career_id', $user->career_id));
+        $query = Practice::query()
+            ->with([
+                'application.student.user:id,name,last_name,email',
+                'application.student.career:id,codigo,nombre',
+                'application.offer:id,titulo,empresa,empresa_id',
+                'application.offer.company:id,razon_social',
+            ])
+            ->latest();
+
+        if ($isCoordinator) {
+            $query->whereHas('application.student', $byCareer);
         }
 
-        return $this->dataTableResponse(
-            $request,
-            $query,
-            searchable: ['estado'],
-            sortable: [
-                'id' => 'id',
-                'estado' => 'estado',
-                'fecha_inicio' => 'fecha_inicio',
-                'fecha_termino' => 'fecha_termino',
-            ],
-            transform: fn (Practice $practice) => $this->format($practice),
-            defaultSort: 'id',
-            defaultDir: 'desc',
-            extraSearch: fn ($query, $like) => $query
-                ->orWhereHas('application.student.user', fn ($student) => $student->where('name', 'like', $like))
-                ->orWhereHas('application.offer', fn ($offer) => $offer->where('titulo', 'like', $like)),
-        );
+        $practices = $query->get();
+
+        $counts = ['total' => $practices->count()];
+        foreach (self::STATES as $state) {
+            $counts[$state] = $practices->where('estado', $state)->count();
+        }
+
+        // Postulaciones pendientes que se pueden convertir en práctica desde "Nueva práctica".
+        $pendingApplications = Application::query()
+            ->with(['student.user:id,name,last_name', 'offer:id,titulo,empresa'])
+            ->where('status', 'Postulado')
+            ->when($isCoordinator, fn ($applications) => $applications->whereHas('student', $byCareer))
+            ->orderByDesc('matching_score')
+            ->get();
+
+        $canDelete = (bool) $user?->hasAnyRole(['Administrador', 'Super Administrador']);
+        $states = self::STATES;
+
+        return view('practices.index', compact('practices', 'counts', 'pendingApplications', 'canDelete', 'states'));
     }
 
-    public function store(PracticeRequest $request): JsonResponse
+    /**
+     * Crea una práctica a partir de una postulación pendiente.
+     */
+    public function store(PracticeRequest $request): RedirectResponse
     {
-        $practice = DB::transaction(function () use ($request): Practice {
+        $error = DB::transaction(function () use ($request): ?string {
             $application = Application::query()->lockForUpdate()->findOrFail($request->validated('application_id'));
             $offer = Offer::query()->lockForUpdate()->findOrFail($application->offer_id);
+
             if ($request->user()->hasRole('Coordinador')) {
                 abort_unless($application->student()->where('career_id', $request->user()->career_id)->exists(), 403);
             }
-            abort_unless($application->status === 'Postulado', 409, 'Solo puedes asignar una postulación pendiente.');
-            abort_if($offer->applications()->whereHas('practice')->count() >= $offer->vacantes, 409, 'La oferta ya completó sus cupos.');
+            if ($application->status !== 'Postulado') {
+                return 'Solo puedes asignar una postulación pendiente.';
+            }
+            if ($offer->applications()->whereHas('practice')->count() >= $offer->vacantes) {
+                return "La oferta «{$offer->titulo}» ya completó sus cupos.";
+            }
 
             $application->update([
                 'status' => 'Asignado',
@@ -71,72 +88,78 @@ class PracticeController extends Controller
                 'decision_at' => now(),
             ]);
 
-            return Practice::create([
+            Practice::create([
                 'application_id' => $application->id,
                 'assigned_by' => $request->user()->id,
                 'fecha_inicio' => $request->validated('fecha_inicio'),
                 'fecha_termino' => $request->validated('fecha_termino'),
                 'estado' => 'Asignado',
             ]);
+
+            return null;
         });
 
-        return response()->json($this->format($practice->load(['application.student.user', 'application.student.career', 'application.offer.company'])), 201);
+        if ($error) {
+            return back()->withInput()->with('error', $error);
+        }
+
+        return back()->with('success', 'Práctica creada en estado «Asignado».');
     }
 
-    public function update(PracticeRequest $request, Practice $practice): JsonResponse
+    /**
+     * Solo se editan las fechas; el estado avanza con transition().
+     */
+    public function update(PracticeRequest $request, Practice $practice): RedirectResponse
     {
         $this->authorizePractice($request, $practice);
         $practice->update($request->safe()->only(['fecha_inicio', 'fecha_termino']));
 
-        return response()->json($this->format($practice->refresh()->load(['application.student.user', 'application.student.career', 'application.offer.company'])));
+        return back()->with('success', 'Fechas de la práctica actualizadas.');
     }
 
-    public function destroy(Request $request, Practice $practice): Response
+    /**
+     * Elimina la práctica y devuelve la postulación a "Postulado".
+     */
+    public function destroy(Request $request, Practice $practice): RedirectResponse
     {
-        $this->authorizePractice($request, $practice);
-        $practice->application()->update(['status' => 'Postulado', 'reviewed_by' => null, 'decision_at' => null]);
-        $practice->delete();
+        abort_unless($request->user()->hasAnyRole(['Administrador', 'Super Administrador']), 403);
 
-        return response()->noContent();
+        DB::transaction(function () use ($practice): void {
+            $practice->application()->update(['status' => 'Postulado', 'reviewed_by' => null, 'decision_at' => null]);
+            $practice->delete();
+        });
+
+        return back()->with('success', 'Práctica eliminada. La postulación volvió a quedar pendiente.');
     }
 
-    public function transition(Request $request, Practice $practice): JsonResponse
+    /**
+     * Avanza la práctica al siguiente estado del flujo.
+     */
+    public function transition(Request $request, Practice $practice): RedirectResponse
     {
         $this->authorizePractice($request, $practice);
         $validated = $request->validate([
-            'estado' => ['required', Rule::in(['En Curso', 'Informe Entregado', 'Finalizada'])],
+            'estado' => ['required', Rule::in(array_slice(self::STATES, 1))],
         ]);
-        $transitions = [
-            'Asignado' => 'En Curso',
-            'En Curso' => 'Informe Entregado',
-            'Informe Entregado' => 'Finalizada',
-        ];
-        abort_unless(($transitions[$practice->estado] ?? null) === $validated['estado'], 409, 'La transición solicitada no está permitida.');
 
-        if ($validated['estado'] === 'Finalizada') {
+        $current = array_search($practice->estado, self::STATES, true);
+        $next = $current === false ? null : (self::STATES[$current + 1] ?? null);
+
+        if ($next !== $validated['estado']) {
+            return back()->with('error', 'La transición solicitada no está permitida.');
+        }
+
+        if ($next === 'Finalizada') {
             $practice->fecha_termino ??= today();
         }
 
-        $practice->estado = $validated['estado'];
-        $practice->save();
-        $practice->application()->update(['status' => $validated['estado']]);
+        DB::transaction(function () use ($practice, $next): void {
+            $practice->estado = $next;
+            $practice->save();
+            $practice->application()->update(['status' => $next]);
+        });
 
-        return response()->json($this->format($practice->refresh()->load(['application.student.user', 'application.student.career', 'application.offer.company'])));
-    }
-
-    private function format(Practice $practice): array
-    {
-        return [
-            'id' => $practice->id,
-            'application_id' => $practice->application_id,
-            'estudiante' => trim(($practice->application?->student?->user?->name ?? '').' '.($practice->application?->student?->user?->last_name ?? '')),
-            'carrera' => $practice->application?->student?->career?->nombre,
-            'oferta' => $practice->application?->offer?->titulo,
-            'empresa' => $practice->application?->offer?->company?->razon_social,
-            'fecha_inicio' => $practice->fecha_inicio?->toDateString(),
-            'fecha_termino' => $practice->fecha_termino?->toDateString(),
-            'estado' => $practice->estado,
-        ];
+        return back()->with('success', "La práctica pasó a «{$next}».");
     }
 
     private function authorizePractice(Request $request, Practice $practice): void

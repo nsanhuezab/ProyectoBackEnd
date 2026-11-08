@@ -16,6 +16,7 @@ class CoordinatorRequest extends FormRequest
     {
         return [
             'nombre' => ['required', 'string', 'max:255'],
+            'apellido' => ['nullable', 'string', 'max:255'],
             'correo' => [
                 'required', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($this->route('coordinator')),

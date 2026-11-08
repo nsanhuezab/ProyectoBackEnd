@@ -2,81 +2,68 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\StudentRequest;
 use App\Models\Career;
 use App\Models\Student;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class StudentController extends Controller
 {
-    use HasDataTable;
-
-    public function index(Request $request): JsonResponse
+    /**
+     * Mantenedor de perfiles de estudiante (cuenta + carrera + nivel + habilidades).
+     */
+    public function index(): View
     {
-        return $this->dataTableResponse(
-            $request,
-            Student::query()->with(['user:id,name,last_name,email', 'career:id,nombre']),
-            searchable: ['id_student', 'nivel_avance', 'carrera'],
-            sortable: [
-                'id' => 'id',
-                'id_student' => 'id_student',
-                'nivel_avance' => 'nivel_avance',
-            ],
-            transform: fn (Student $student) => $this->format($student),
-            defaultSort: 'id_student',
-            extraSearch: fn ($query, $like) => $query
-                ->orWhereHas('user', fn ($user) => $user->where('name', 'like', $like)->orWhere('email', 'like', $like))
-                ->orWhereHas('career', fn ($career) => $career->where('nombre', 'like', $like)),
-        );
+        $students = Student::query()
+            ->with(['user:id,name,last_name,email', 'career:id,codigo,nombre'])
+            ->withCount('applications')
+            ->orderBy('id_student')
+            ->get();
+
+        $counts = [
+            'total' => $students->count(),
+            'con_postulaciones' => $students->where('applications_count', '>', 0)->count(),
+            'sin_postulaciones' => $students->where('applications_count', 0)->count(),
+        ];
+
+        $careers = Career::query()->orderBy('nombre')->get(['id', 'codigo', 'nombre']);
+
+        // Cuentas con rol Estudiante; las que ya tienen perfil se marcan en la vista.
+        $studentUsers = User::role('Estudiante')->orderBy('name')->get(['id', 'name', 'last_name', 'email']);
+        $usedUserIds = $students->pluck('user_id')->filter()->all();
+
+        return view('students.index', compact('students', 'counts', 'careers', 'studentUsers', 'usedUserIds'));
     }
 
-    public function store(StudentRequest $request): JsonResponse
+    public function store(StudentRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $user = User::findOrFail($data['user_id']);
-        abort_unless($user->hasRole('Estudiante'), 422, 'El perfil debe vincularse a una cuenta con rol Estudiante.');
-        $career = Career::findOrFail($data['career_id']);
-        $data['carrera'] = $career->nombre;
-        $student = Student::create($data)->load(['user:id,name,last_name,email', 'career:id,nombre']);
+        $data['carrera'] = Career::findOrFail($data['career_id'])->nombre;
+        $student = Student::create($data);
 
-        return response()->json($this->format($student), 201);
+        return back()->with('success', "Perfil de estudiante #{$student->id_student} creado correctamente.");
     }
 
-    public function update(StudentRequest $request, Student $student): JsonResponse
+    public function update(StudentRequest $request, Student $student): RedirectResponse
     {
         $data = $request->validated();
-        $user = User::findOrFail($data['user_id']);
-        abort_unless($user->hasRole('Estudiante'), 422, 'El perfil debe vincularse a una cuenta con rol Estudiante.');
         $data['carrera'] = Career::findOrFail($data['career_id'])->nombre;
         $student->update($data);
 
-        return response()->json($this->format($student->load(['user:id,name,last_name,email', 'career:id,nombre'])));
+        return back()->with('success', "Perfil de estudiante #{$student->id_student} actualizado correctamente.");
     }
 
-    public function destroy(Student $student): Response
+    public function destroy(Student $student): RedirectResponse
     {
-        abort_if($student->applications()->exists(), 409, 'No puedes eliminar un perfil con postulaciones.');
+        $applications = $student->applications()->count();
+        if ($applications > 0) {
+            return back()->with('error', "No se puede eliminar el perfil #{$student->id_student} porque tiene {$applications} postulación(es).");
+        }
+
         $student->delete();
 
-        return response()->noContent();
-    }
-
-    private function format(Student $student): array
-    {
-        return [
-            'id' => $student->id,
-            'id_student' => $student->id_student,
-            'user_id' => $student->user_id,
-            'estudiante' => $student->user?->name.' '.$student->user?->last_name,
-            'correo' => $student->user?->email,
-            'career_id' => $student->career_id,
-            'carrera' => $student->career?->nombre ?? $student->carrera,
-            'nivel_avance' => $student->nivel_avance,
-            'habilidades' => $student->habilidades ?? [],
-        ];
+        return back()->with('success', "Perfil de estudiante #{$student->id_student} eliminado correctamente.");
     }
 }

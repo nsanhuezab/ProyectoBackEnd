@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StudentRequest extends FormRequest
 {
@@ -31,6 +33,42 @@ class StudentRequest extends FormRequest
             'nivel_avance' => ['required', 'string', 'max:120'],
             'habilidades' => ['nullable', 'array', 'max:30'],
             'habilidades.*' => ['string', 'max:100'],
+        ];
+    }
+
+    /**
+     * Las habilidades llegan del formulario como texto separado por comas.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('habilidades'))) {
+            $this->merge([
+                'habilidades' => collect(explode(',', $this->input('habilidades')))
+                    ->map(fn (string $skill) => trim($skill))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            ]);
+        }
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $user = User::find($this->input('user_id'));
+            if ($user && ! $user->hasRole('Estudiante')) {
+                $validator->errors()->add('user_id', 'El perfil debe vincularse a una cuenta con rol Estudiante.');
+            }
+        });
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'id_student' => 'ID de estudiante',
+            'user_id' => 'cuenta de estudiante',
+            'career_id' => 'carrera',
+            'nivel_avance' => 'nivel de avance',
         ];
     }
 }

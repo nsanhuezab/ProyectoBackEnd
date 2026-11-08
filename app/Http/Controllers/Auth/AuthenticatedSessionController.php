@@ -32,9 +32,9 @@ class AuthenticatedSessionController extends Controller
         if ($user->hasRole('Estudiante')) {
             $destination = route('student.offers.view', absolute: false);
         } elseif ($user->hasRole('Empresa')) {
-            $destination = route('company.offers.view', absolute: false);
+            $destination = route('offers.index', absolute: false);
         } elseif ($user->hasRole('Coordinador')) {
-            $destination = route('coordinator.management.index', 'applications', absolute: false);
+            $destination = route('applications.index', absolute: false);
         } else {
             $destination = route('dashboard', absolute: false);
         }
