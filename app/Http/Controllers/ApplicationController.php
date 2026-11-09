@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\ApplicationRequest;
 use App\Models\Application;
+use App\Models\ApplicationMessage;
 use App\Models\Offer;
 use App\Models\Practice;
 use App\Models\Student;
+use App\Support\Notifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -21,8 +21,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicationController extends Controller
 {
-    use HasDataTable;
-
     /**
      * Postulaciones para Administrador (todas) y Coordinador (solo las de su carrera).
      */
@@ -58,37 +56,6 @@ class ApplicationController extends Controller
         return view('applications.index', compact('applications', 'counts', 'canDelete'));
     }
 
-    /**
-     * Datos en JSON para la vista "Mis postulaciones" del estudiante.
-     */
-    public function studentData(Request $request): JsonResponse
-    {
-        $query = Application::query()
-            ->with([
-                'student.user:id,name,last_name,email',
-                'student.career:id,nombre',
-                'offer.company:id,razon_social',
-            ])
-            ->whereHas('student', fn (Builder $student) => $student->where('user_id', $request->user()->id));
-
-        return $this->dataTableResponse(
-            $request,
-            $query,
-            searchable: ['status', 'matching_score'],
-            sortable: [
-                'id' => 'id',
-                'estado' => 'status',
-                'matching_score' => 'matching_score',
-                'created_at' => 'created_at',
-            ],
-            transform: fn (Application $application) => $this->format($application),
-            defaultSort: 'created_at',
-            defaultDir: 'desc',
-            extraSearch: fn ($query, $like) => $query
-                ->orWhereHas('offer', fn ($offer) => $offer->where('titulo', 'like', $like)),
-        );
-    }
-
     public function store(ApplicationRequest $request): JsonResponse
     {
         $student = $request->user()?->studentProfile;
@@ -111,6 +78,9 @@ class ApplicationController extends Controller
                 if ($offer->careers()->exists() && ! $offer->careers()->whereKey($student->career_id)->exists()) {
                     throw ValidationException::withMessages(['offer_id' => 'La oferta no corresponde a tu carrera.']);
                 }
+                if ($offer->min_gpa !== null && ($student->gpa === null || (float) $student->gpa < (float) $offer->min_gpa)) {
+                    throw ValidationException::withMessages(['offer_id' => 'Esta oferta exige un promedio mínimo de '.number_format((float) $offer->min_gpa, 1, ',', '').' y tu promedio registrado no lo alcanza.']);
+                }
 
                 $application = Application::create([
                     'student_id' => $student->id,
@@ -127,6 +97,13 @@ class ApplicationController extends Controller
             Storage::disk('local')->delete($cvPath);
             throw $exception;
         }
+
+        Notifier::send(
+            Notifier::coordinatorsOf([$student->career_id]),
+            'Nueva postulación',
+            trim($request->user()->name.' '.$request->user()->last_name)." postuló a «{$application->offer?->titulo}» con ".round((float) $application->matching_score).'% de afinidad.',
+            route('applications.show', $application),
+        );
 
         return response()->json($this->format($application), 201);
     }
@@ -167,6 +144,14 @@ class ApplicationController extends Controller
             return back()->with('error', $error);
         }
 
+        $application->loadMissing('student.user', 'offer');
+        Notifier::send(
+            $application->student?->user,
+            '¡Te asignaron una práctica!',
+            "Tu postulación a «{$application->offer?->titulo}» fue aceptada. Revisa los detalles en «Mi práctica».",
+            route('student.practice.index'),
+        );
+
         return back()->with('success', 'Postulación asignada. La práctica quedó creada en estado «Asignado».');
     }
 
@@ -183,6 +168,14 @@ class ApplicationController extends Controller
             'reviewed_by' => $request->user()->id,
             'decision_at' => now(),
         ]);
+
+        $application->loadMissing('student.user', 'offer');
+        Notifier::send(
+            $application->student?->user,
+            'Postulación no seleccionada',
+            "Tu postulación a «{$application->offer?->titulo}» no fue seleccionada esta vez.",
+            route('applications.show', $application),
+        );
 
         return back()->with('success', 'Postulación rechazada.');
     }
@@ -206,14 +199,17 @@ class ApplicationController extends Controller
     /**
      * El estudiante retira su propia postulación mientras siga pendiente.
      */
-    public function studentDestroy(Request $request, Application $application): Response
+    public function studentDestroy(Request $request, Application $application): RedirectResponse
     {
         abort_unless($application->student()->where('user_id', $request->user()->id)->exists(), 404);
-        abort_unless($application->status === 'Postulado', 409, 'No puedes retirar una postulación ya asignada.');
+
+        if ($application->status !== 'Postulado') {
+            return back()->with('error', 'No puedes retirar una postulación que ya fue resuelta.');
+        }
 
         $this->deleteApplication($application);
 
-        return response()->noContent();
+        return back()->with('success', 'Postulación retirada.');
     }
 
     private function deleteApplication(Application $application): void
@@ -222,6 +218,66 @@ class ApplicationController extends Controller
             Storage::disk('local')->delete($application->cv_path);
         }
         $application->delete();
+    }
+
+    /**
+     * Detalle de una postulación con su conversación (RF-03).
+     * La ven el estudiante dueño, el coordinador de su carrera y el administrador.
+     */
+    public function show(Request $request, Application $application): View
+    {
+        $application->load([
+            'student.user:id,name,last_name,email',
+            'student.career',
+            'offer.company',
+            'practice',
+            'reviewer:id,name,last_name',
+            'messages.user:id,name,last_name',
+        ]);
+        $this->authorizeConversation($request, $application);
+
+        $isStudent = $application->student?->user_id === $request->user()->id;
+        $canReview = ! $isStudent && $application->status === 'Postulado';
+
+        return view('applications.show', compact('application', 'isStudent', 'canReview'));
+    }
+
+    public function storeMessage(Request $request, Application $application): RedirectResponse
+    {
+        $application->loadMissing('student.user', 'offer');
+        $this->authorizeConversation($request, $application);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'min:2', 'max:2000'],
+        ], [], ['body' => 'mensaje']);
+
+        ApplicationMessage::create([
+            'application_id' => $application->id,
+            'user_id' => $request->user()->id > 0 ? $request->user()->id : null,
+            'application_status' => $application->status,
+            'body' => $validated['body'],
+        ]);
+
+        $fromStudent = $application->student?->user_id === $request->user()->id;
+        Notifier::send(
+            $fromStudent ? Notifier::coordinatorsOf([$application->student?->career_id]) : $application->student?->user,
+            'Nuevo mensaje en una postulación',
+            trim($request->user()->name.' '.$request->user()->last_name)." escribió sobre «{$application->offer?->titulo}».",
+            route('applications.show', $application),
+        );
+
+        return back()->with('success', 'Mensaje enviado.');
+    }
+
+    private function authorizeConversation(Request $request, Application $application): void
+    {
+        $user = $request->user();
+        abort_unless(
+            $application->student?->user_id === $user->id
+                || $user->hasAnyRole(['Administrador', 'Super Administrador'])
+                || ($user->hasRole('Coordinador') && $application->student?->career_id === $user->career_id),
+            403,
+        );
     }
 
     public function cv(Request $request, Application $application): StreamedResponse
@@ -277,6 +333,7 @@ class ApplicationController extends Controller
             'estado' => $application->status,
             'matching_score' => (float) $application->matching_score,
             'cv_url' => $application->cv_path ? route('applications.cv', $application) : null,
+            'detail_url' => route('applications.show', $application),
             'created_at' => $application->created_at?->toDateString(),
         ];
     }

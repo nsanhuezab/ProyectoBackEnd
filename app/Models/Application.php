@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Application extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $fillable = [
         'student_id',
@@ -48,5 +50,15 @@ class Application extends Model
     public function practice(): HasOne
     {
         return $this->hasOne(Practice::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(ApplicationMessage::class)->oldest();
+    }
+
+    public function activityLabel(): string
+    {
+        return 'Postulación #'.$this->id;
     }
 }

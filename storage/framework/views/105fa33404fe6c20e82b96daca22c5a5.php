@@ -73,7 +73,6 @@
 
         <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
             <?php
-                $isDemo = app()->environment('local') && config('app.demo_mode');
                 $currentUser = auth()->user();
                 $icons = [
                     'users' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
@@ -85,11 +84,13 @@
                     'applications' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
                     'practices' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
                     'search' => 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+                    'reports' => 'M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
+                    'activity' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
                 ];
 
                 // Cada sección del menú: [título, ¿se muestra?, [ [nombre de ruta, texto, ícono], ... ]]
                 $menu = [
-                    ['Administración', $isDemo || $currentUser?->hasAnyRole(['Administrador', 'Super Administrador']), [
+                    ['Administración', (bool) $currentUser?->hasAnyRole(['Administrador', 'Super Administrador']), [
                         ['dashboard', 'Usuarios y roles', 'users'],
                         ['careers.index', 'Carreras', 'careers'],
                         ['coordinators.index', 'Coordinadores', 'coordinators'],
@@ -98,18 +99,25 @@
                         ['offers.index', 'Ofertas', 'offers'],
                         ['applications.index', 'Postulaciones', 'applications'],
                         ['practices.index', 'Prácticas', 'practices'],
+                        ['reports.index', 'Indicadores', 'reports'],
+                        ['activity.index', 'Historial de cambios', 'activity'],
                     ]],
-                    ['Coordinador', ! $isDemo && $currentUser?->hasRole('Coordinador'), [
+                    ['Coordinador', (bool) $currentUser?->hasRole('Coordinador'), [
                         ['applications.index', 'Postulaciones', 'applications'],
                         ['offers.index', 'Aprobar ofertas', 'offers'],
                         ['practices.index', 'Prácticas', 'practices'],
+                        ['students.index', 'Validar estudiantes', 'students'],
+                        ['reports.index', 'Indicadores', 'reports'],
                     ]],
-                    ['Estudiante', $isDemo || $currentUser?->hasRole('Estudiante'), [
+                    ['Estudiante', (bool) $currentUser?->hasRole('Estudiante'), [
                         ['student.offers.view', 'Explorar ofertas', 'search'],
                         ['student.applications.view', 'Mis postulaciones', 'applications'],
+                        ['student.practice.index', 'Mi práctica', 'practices'],
                     ]],
-                    ['Empresa', ! $isDemo && $currentUser?->hasRole('Empresa'), [
+                    ['Empresa', (bool) $currentUser?->hasRole('Empresa'), [
                         ['offers.index', 'Mis ofertas', 'offers'],
+                        ['company.applicants', 'Postulantes', 'coordinators'],
+                        ['company.practices', 'Practicantes', 'practices'],
                     ]],
                 ];
             ?>
@@ -125,7 +133,8 @@
                 <?php $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$routeName, $label, $icon]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <?php
                         $baseName = \Illuminate\Support\Str::beforeLast($routeName, '.');
-                        $isActive = request()->routeIs($routeName) || ($routeName !== 'dashboard' && request()->routeIs($baseName.'.*'));
+                        $isSectionLink = \Illuminate\Support\Str::endsWith($routeName, ['.index', '.view']);
+                        $isActive = request()->routeIs($routeName) || ($isSectionLink && request()->routeIs($baseName.'.*'));
                     ?>
                     <a href="<?php echo e(Route::has($routeName) ? route($routeName) : '#'); ?>"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 <?php echo e($isActive ? 'text-white bg-slate-900 shadow-sm' : 'text-slate-700 hover:bg-slate-100'); ?>">
@@ -165,48 +174,53 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <!-- Contenedor de Notificaciones -->
+                <!-- Contenedor de Notificaciones (RF-10) -->
+                <?php
+                    $notificationUser = auth()->user();
+                    $canNotify = $notificationUser && $notificationUser->exists;
+                    $unreadCount = $canNotify ? $notificationUser->unreadNotifications()->count() : 0;
+                    $latestNotifications = $canNotify ? $notificationUser->notifications()->latest()->limit(8)->get() : collect();
+                ?>
                 <div class="relative" id="notifications-container">
-                    <button onclick="toggleNotifications()" type="button"
+                    <button onclick="toggleNotifications()" type="button" aria-label="Notificaciones"
                         class="relative p-2 text-white/90 hover:text-white transition-colors focus:outline-none rounded-full hover:bg-red-800">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
                             </path>
                         </svg>
-                        <span
-                            class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-amber-400 border-2 border-red-700 rounded-full"></span>
+                        <?php if($unreadCount > 0): ?>
+                            <span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-amber-400 border-2 border-red-700 rounded-full text-[10px] font-bold text-slate-900 flex items-center justify-center"><?php echo e($unreadCount > 9 ? '9+' : $unreadCount); ?></span>
+                        <?php endif; ?>
                     </button>
 
                     <div id="notifications-menu"
                         class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 z-50 overflow-hidden transform opacity-0 scale-95 transition-all duration-200 origin-top-right">
-                        <div
-                            class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+                        <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
                             <h3 class="text-sm font-bold text-slate-800">Notificaciones</h3>
-                            <span
-                                class="bg-red-100 text-red-700 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">1
-                                Nueva</span>
+                            <?php if($unreadCount > 0): ?>
+                                <form method="POST" action="<?php echo e(route('notifications.read-all')); ?>">
+                                    <?php echo csrf_field(); ?>
+                                    <button type="submit" class="text-[11px] font-semibold text-red-700 hover:underline">Marcar todas como leídas</button>
+                                </form>
+                            <?php endif; ?>
                         </div>
                         <div class="max-h-80 overflow-y-auto">
-                            <a href="#"
-                                class="block px-4 py-3 hover:bg-slate-50 border-b border-slate-50 transition-colors bg-red-50/30">
-                                <div class="flex gap-3">
-                                    <div
-                                        class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0 mt-0.5 font-bold">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
+                            <?php $__empty_1 = true; $__currentLoopData = $latestNotifications; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $notification): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <a href="<?php echo e(route('notifications.open', $notification->id)); ?>"
+                                    class="block px-4 py-3 hover:bg-slate-50 border-b border-slate-50 transition-colors <?php echo e($notification->read_at ? '' : 'bg-red-50/40'); ?>">
+                                    <div class="flex gap-3">
+                                        <span class="w-2 h-2 rounded-full mt-1.5 shrink-0 <?php echo e($notification->read_at ? 'bg-slate-200' : 'bg-red-600'); ?>"></span>
+                                        <div>
+                                            <p class="text-sm text-slate-800 font-semibold"><?php echo e($notification->data['title'] ?? 'Aviso'); ?></p>
+                                            <p class="text-xs text-slate-600 mt-0.5 leading-relaxed"><?php echo e($notification->data['message'] ?? ''); ?></p>
+                                            <p class="text-[10px] font-medium text-red-600 mt-1"><?php echo e($notification->created_at?->diffForHumans()); ?></p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p class="text-sm text-slate-800 font-semibold">Sistema actualizado</p>
-                                        <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">Los datos de las
-                                            carreras han sido sincronizados.</p>
-                                        <p class="text-[10px] font-medium text-red-600 mt-1">Hace 5 min</p>
-                                    </div>
-                                </div>
-                            </a>
+                                </a>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <p class="px-4 py-8 text-center text-xs text-slate-500">No tienes notificaciones.</p>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

@@ -12,8 +12,19 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        // /dashboard es el inicio por defecto de Laravel: quien no administra va a su propia página.
+        $user = $request->user();
+        if (! $user?->hasAnyRole(['Administrador', 'Super Administrador'])) {
+            return redirect()->route(match (true) {
+                (bool) $user?->hasRole('Estudiante') => 'student.offers.view',
+                (bool) $user?->hasRole('Coordinador') => 'applications.index',
+                (bool) $user?->hasRole('Empresa') => 'offers.index',
+                default => 'profile.edit',
+            });
+        }
+
         $this->authorizeUserManagement($request);
 
         $isSuperAdministrator = $this->isSuperAdministrator($request);
@@ -89,11 +100,7 @@ class UserController extends Controller
 
     private function authorizeUserManagement(Request $request): void
     {
-        abort_unless(
-            (app()->environment('local') && config('app.demo_mode')) ||
-                $request->user()?->hasAnyRole(['Administrador', 'Super Administrador']),
-            403
-        );
+        abort_unless($request->user()?->hasAnyRole(['Administrador', 'Super Administrador']), 403);
     }
 
     private function authorizeTargetUser(Request $request, User $user): void

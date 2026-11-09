@@ -21,6 +21,11 @@ class UseLocalDemoUser
     {
         abort_unless(app()->environment('local') && config('app.demo_mode'), 404);
 
+        // Si alguien inició sesión de verdad (por ejemplo un estudiante), se respeta su sesión.
+        if (Auth::check()) {
+            return $next($request);
+        }
+
         $user = User::whereHas('roles', fn ($roles) => $roles->where('name', 'Administrador'))->orderBy('id')->first()
             ?? (new User)->forceFill([
                 'id' => 0,

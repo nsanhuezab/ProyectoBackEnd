@@ -4,7 +4,8 @@
 
 @section('content')
     <div class="space-y-6">
-        <x-page-header title="Estudiantes" description="Vincula las cuentas de estudiante con su carrera, nivel de avance y habilidades.">
+        <x-page-header title="Estudiantes" :description="$can['manage'] ? 'Vincula las cuentas de estudiante con su carrera, nivel, promedio y habilidades. El coordinador valida cada perfil.' : 'Revisa y valida los datos académicos de los estudiantes de tu carrera.'">
+            @if ($can['manage'])
             <x-slot:actions>
                 <button type="button" onclick="openCreateModal('createStudentModal')"
                     class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-slate-800 cursor-pointer">
@@ -12,12 +13,13 @@
                     Nuevo perfil
                 </button>
             </x-slot:actions>
+            @endif
         </x-page-header>
 
         <div class="grid gap-4 sm:grid-cols-3">
             <x-stat-card label="Perfiles de estudiante" :value="$counts['total']" />
-            <x-stat-card label="Con postulaciones" :value="$counts['con_postulaciones']" color="blue" />
-            <x-stat-card label="Sin postulaciones" :value="$counts['sin_postulaciones']" color="muted" />
+            <x-stat-card label="Validados por coordinador" :value="$counts['validados']" color="emerald" />
+            <x-stat-card label="Por validar" :value="$counts['por_validar']" color="amber" />
         </div>
 
         <x-table-card title="Listado de estudiantes" :total="$counts['total']" search-id="studentSearch" search-placeholder="Buscar por nombre, ID, carrera o habilidad...">
@@ -31,9 +33,10 @@
                         <th class="px-6 py-3.5">ID</th>
                         <th class="px-6 py-3.5">Estudiante</th>
                         <th class="px-6 py-3.5">Carrera</th>
-                        <th class="px-6 py-3.5">Nivel</th>
+                        <th class="px-6 py-3.5">Nivel / año / promedio</th>
                         <th class="px-6 py-3.5">Habilidades</th>
                         <th class="px-6 py-3.5 text-center">Postulaciones</th>
+                        <th class="px-6 py-3.5 text-center">Validación</th>
                         <th class="px-6 py-3.5 text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -48,6 +51,8 @@
                                 'career_id' => $student->career_id,
                                 'nivel_avance' => $student->nivel_avance,
                                 'habilidades' => implode(', ', $skills),
+                                'year_level' => $student->year_level,
+                                'gpa' => $student->gpa,
                             ];
                         @endphp
                         <tr class="hover:bg-gray-50/70 transition-colors">
@@ -68,6 +73,10 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex px-2.5 py-1 rounded-full text-[11.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ $student->nivel_avance }}</span>
+                                <p class="mt-1 text-[12px] text-slate-500">
+                                    {{ $student->year_level ? $student->year_level.'° año' : 'Año sin registrar' }} ·
+                                    Promedio <b class="text-slate-700">{{ $student->gpa !== null ? number_format((float) $student->gpa, 1, ',', '') : '—' }}</b>
+                                </p>
                             </td>
                             <td class="px-6 py-4" data-search="{{ implode(' ', $skills) }}">
                                 <div class="flex flex-wrap gap-1 max-w-[240px]">
@@ -86,8 +95,26 @@
                                     {{ $student->applications_count }}
                                 </span>
                             </td>
+                            <td class="px-6 py-4 text-center">
+                                @if ($student->validated_at)
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        title="{{ $student->validator ? 'Por '.trim($student->validator->name.' '.$student->validator->last_name) : '' }} el {{ $student->validated_at->format('d-m-Y') }}">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Validado
+                                    </span>
+                                @else
+                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[11.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Por validar</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1.5">
+                                    @if ($can['validate'] && ! $student->validated_at)
+                                        <form id="validate-student-{{ $student->id }}" action="{{ route('students.validate', $student) }}" method="POST">
+                                            @csrf
+                                            <x-action-button type="approve" title="Validar datos del estudiante"
+                                                onclick="confirmSubmit('validate-student-{{ $student->id }}', { title: '¿Validar perfil?', text: {{ json_encode('Confirmas que los datos académicos de '.$fullName.' son correctos.') }}, confirmText: 'Sí, validar', color: '#047857', icon: 'question' })" />
+                                        </form>
+                                    @endif
+                                    @if ($can['manage'])
                                     <x-action-button type="edit" title="Editar perfil"
                                         onclick="openEditModal('editStudentModal', {{ json_encode(route('students.update', $student)) }}, {{ json_encode($rowData) }}, {{ json_encode('#'.$student->id_student.' · '.$fullName) }})" />
                                     <form id="delete-student-{{ $student->id }}" action="{{ route('students.destroy', $student) }}" method="POST">
@@ -96,6 +123,7 @@
                                         <x-action-button type="delete" title="Eliminar perfil"
                                             onclick="confirmSubmit('delete-student-{{ $student->id }}', { title: '¿Eliminar perfil?', text: {{ json_encode('Se eliminará el perfil de '.$fullName.'. La cuenta de usuario se conserva.') }}, confirmText: 'Sí, eliminar' })" />
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -112,6 +140,7 @@
         <option value="Egresado"></option>
     </datalist>
 
+    @if ($can['manage'])
     @foreach (['create' => 'Nuevo perfil de estudiante', 'edit' => 'Editar perfil de estudiante'] as $mode => $modalTitle)
         @php $modalId = $mode.'StudentModal'; @endphp
         <x-form-modal :id="$modalId" :title="$modalTitle" subtitle="Cuenta, carrera, nivel y habilidades del estudiante.">
@@ -148,6 +177,17 @@
                     <x-field label="Nivel de avance" for="{{ $mode }}-nivel_avance" required>
                         <input type="text" id="{{ $mode }}-nivel_avance" name="nivel_avance" list="nivelesAvance" required maxlength="120" value="{{ $old('nivel_avance') }}" placeholder="Ej: Avanzado" class="form-input">
                     </x-field>
+                    <x-field label="Año que cursa" for="{{ $mode }}-year_level">
+                        <select id="{{ $mode }}-year_level" name="year_level" class="form-input">
+                            <option value="">Sin registrar</option>
+                            @for ($year = 1; $year <= 7; $year++)
+                                <option value="{{ $year }}" @selected((string) $old('year_level') === (string) $year)>{{ $year }}° año</option>
+                            @endfor
+                        </select>
+                    </x-field>
+                    <x-field label="Promedio de notas" for="{{ $mode }}-gpa" hint="Escala 1,0 a 7,0. Algunas ofertas exigen un promedio mínimo.">
+                        <input type="number" id="{{ $mode }}-gpa" name="gpa" min="1" max="7" step="0.1" value="{{ $old('gpa') }}" placeholder="Ej: 5.6" class="form-input">
+                    </x-field>
                     <x-field label="Habilidades" for="{{ $mode }}-habilidades" class="sm:col-span-2" hint="Sepáralas con comas. Se usan para calcular la afinidad con las ofertas.">
                         <input type="text" id="{{ $mode }}-habilidades" name="habilidades" value="{{ is_array($old('habilidades')) ? implode(', ', $old('habilidades')) : $old('habilidades') }}" placeholder="PHP, Laravel, SQL" class="form-input">
                     </x-field>
@@ -157,6 +197,7 @@
             </form>
         </x-form-modal>
     @endforeach
+    @endif
 @endsection
 
 @push('scripts')

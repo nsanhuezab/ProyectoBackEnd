@@ -139,17 +139,6 @@
                             $companyName = $application->offer?->company?->razon_social ?? $application->offer?->empresa;
                             $score = (float) $application->matching_score;
                             $scoreColor = $score >= 70 ? 'bg-emerald-500' : ($score >= 40 ? 'bg-amber-500' : 'bg-red-600');
-                            $showData = [
-                                'estudiante' => $studentName,
-                                'correo' => $studentUser?->email,
-                                'carrera' => $application->student?->career?->nombre ?? $application->student?->carrera,
-                                'oferta' => $application->offer?->titulo,
-                                'empresa' => $companyName,
-                                'afinidad' => rtrim(rtrim(number_format($score, 2, ',', '.'), '0'), ',').'%',
-                                'estado' => $application->status,
-                                'fecha' => $application->created_at?->format('d-m-Y H:i'),
-                                'motivacion' => $application->motivation,
-                            ];
                         ?>
                         <tr class="hover:bg-gray-50/70 transition-colors">
                             <td class="px-6 py-4">
@@ -202,26 +191,10 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <?php if (isset($component)) { $__componentOriginald4c6978101b1c254eb70511d3c21c03f = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginald4c6978101b1c254eb70511d3c21c03f = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-button','data' => ['type' => 'view','title' => 'Ver postulación','onclick' => 'openShowModal(\'showApplicationModal\', '.e(json_encode($showData)).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('action-button'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['type' => 'view','title' => 'Ver postulación','onclick' => 'openShowModal(\'showApplicationModal\', '.e(json_encode($showData)).')']); ?>
-<?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginald4c6978101b1c254eb70511d3c21c03f)): ?>
-<?php $attributes = $__attributesOriginald4c6978101b1c254eb70511d3c21c03f; ?>
-<?php unset($__attributesOriginald4c6978101b1c254eb70511d3c21c03f); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginald4c6978101b1c254eb70511d3c21c03f)): ?>
-<?php $component = $__componentOriginald4c6978101b1c254eb70511d3c21c03f; ?>
-<?php unset($__componentOriginald4c6978101b1c254eb70511d3c21c03f); ?>
-<?php endif; ?>
+                                    <a href="<?php echo e(route('applications.show', $application)); ?>" title="Ver postulación y mensajes"
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 shadow-sm hover:bg-gray-50 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                    </a>
 
                                     <?php if($application->cv_path): ?>
                                         <a href="<?php echo e(route('applications.cv', $application)); ?>" title="Descargar CV"
@@ -327,47 +300,6 @@
         </p>
     </div>
 
-    
-    <?php if (isset($component)) { $__componentOriginaldf85e6552b95df616d59caebcbf2473d = $component; } ?>
-<?php if (isset($attributes)) { $__attributesOriginaldf85e6552b95df616d59caebcbf2473d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-modal','data' => ['id' => 'showApplicationModal','title' => 'Detalle de la postulación','width' => 'max-w-2xl']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
-<?php $component->withName('form-modal'); ?>
-<?php if ($component->shouldRender()): ?>
-<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
-<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
-<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
-<?php endif; ?>
-<?php $component->withAttributes(['id' => 'showApplicationModal','title' => 'Detalle de la postulación','width' => 'max-w-2xl']); ?>
-        <div class="px-6 py-5 space-y-4 text-[13px]">
-            <?php
-                $detailFields = [
-                    'estudiante' => 'Estudiante', 'correo' => 'Correo', 'carrera' => 'Carrera', 'oferta' => 'Oferta',
-                    'empresa' => 'Empresa', 'afinidad' => 'Afinidad', 'estado' => 'Estado', 'fecha' => 'Fecha de postulación',
-                ];
-            ?>
-            <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-                <?php $__currentLoopData = $detailFields; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <div>
-                        <dt class="text-[11.5px] text-slate-500"><?php echo e($label); ?></dt>
-                        <dd class="font-semibold text-slate-800" data-show="<?php echo e($key); ?>"></dd>
-                    </div>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-            </dl>
-            <div>
-                <p class="text-[11.5px] text-slate-500 mb-1">Carta de motivación</p>
-                <p class="whitespace-pre-line text-slate-700 leading-relaxed" data-show="motivacion"></p>
-            </div>
-        </div>
-     <?php echo $__env->renderComponent(); ?>
-<?php endif; ?>
-<?php if (isset($__attributesOriginaldf85e6552b95df616d59caebcbf2473d)): ?>
-<?php $attributes = $__attributesOriginaldf85e6552b95df616d59caebcbf2473d; ?>
-<?php unset($__attributesOriginaldf85e6552b95df616d59caebcbf2473d); ?>
-<?php endif; ?>
-<?php if (isset($__componentOriginaldf85e6552b95df616d59caebcbf2473d)): ?>
-<?php $component = $__componentOriginaldf85e6552b95df616d59caebcbf2473d; ?>
-<?php unset($__componentOriginaldf85e6552b95df616d59caebcbf2473d); ?>
-<?php endif; ?>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startPush('scripts'); ?>

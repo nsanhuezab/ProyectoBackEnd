@@ -30,6 +30,15 @@ class UserSeeder extends Seeder
                 'role' => 'Estudiante',
             ],
             [
+                'name' => 'María',
+                'last_name' => 'González',
+                'rut' => '77777777-7',
+                'gender' => 'Femenino',
+                'age' => 23,
+                'email' => 'maria@ucsc.cl',
+                'role' => 'Estudiante',
+            ],
+            [
                 'name' => 'Coordinador',
                 'last_name' => 'UCSC',
                 'rut' => '33333333-3',

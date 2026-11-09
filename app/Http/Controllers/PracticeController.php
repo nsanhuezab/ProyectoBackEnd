@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\AuthorizesPractices;
 use App\Http\Requests\PracticeRequest;
 use App\Models\Application;
 use App\Models\Offer;
 use App\Models\Practice;
+use App\Models\PracticeEvaluation;
+use App\Support\Notifier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class PracticeController extends Controller
 {
-    /**
-     * Flujo de estados de una práctica: cada estado solo puede avanzar al siguiente.
-     */
-    public const STATES = ['Asignado', 'En Curso', 'Informe Entregado', 'Finalizada'];
+    use AuthorizesPractices;
 
     /**
      * Prácticas para Administrador (todas) y Coordinador (solo las de su carrera).
@@ -28,6 +29,7 @@ class PracticeController extends Controller
         $user = $request->user();
         $isCoordinator = (bool) $user?->hasRole('Coordinador');
         $byCareer = fn (Builder $student) => $student->where('career_id', $user->career_id);
+        $states = config('practices.states');
 
         $query = Practice::query()
             ->with([
@@ -36,6 +38,7 @@ class PracticeController extends Controller
                 'application.offer:id,titulo,empresa,empresa_id',
                 'application.offer.company:id,razon_social',
             ])
+            ->withCount(['logs', 'evaluations'])
             ->latest();
 
         if ($isCoordinator) {
@@ -45,7 +48,7 @@ class PracticeController extends Controller
         $practices = $query->get();
 
         $counts = ['total' => $practices->count()];
-        foreach (self::STATES as $state) {
+        foreach ($states as $state) {
             $counts[$state] = $practices->where('estado', $state)->count();
         }
 
@@ -57,10 +60,33 @@ class PracticeController extends Controller
             ->orderByDesc('matching_score')
             ->get();
 
-        $canDelete = (bool) $user?->hasAnyRole(['Administrador', 'Super Administrador']);
-        $states = self::STATES;
+        $canDelete = $this->isAdmin($user);
 
         return view('practices.index', compact('practices', 'counts', 'pendingApplications', 'canDelete', 'states'));
+    }
+
+    /**
+     * Detalle de una práctica: avance, bitácora, rúbricas, nota final y acta.
+     */
+    public function show(Request $request, Practice $practice): View
+    {
+        $this->loadPracticeRelations($practice);
+        $user = $request->user();
+        abort_unless($this->canViewPractice($user, $practice), 403);
+
+        $can = [
+            'evaluateSupervisor' => $this->canEvaluate($user, $practice, PracticeEvaluation::SUPERVISOR),
+            'evaluateCoordinator' => $this->canEvaluate($user, $practice, PracticeEvaluation::COORDINATOR),
+            'manage' => $this->isAdmin($user) || $this->isCareerCoordinator($user, $practice),
+            'seeStudentContact' => ! $this->isCompanySupervisor($user, $practice) || $this->isAdmin($user),
+        ];
+
+        return view('practices.show', [
+            'practice' => $practice,
+            'states' => config('practices.states'),
+            'competencies' => config('practices.competencies'),
+            'can' => $can,
+        ]);
     }
 
     /**
@@ -88,13 +114,20 @@ class PracticeController extends Controller
                 'decision_at' => now(),
             ]);
 
-            Practice::create([
+            $practice = Practice::create([
                 'application_id' => $application->id,
                 'assigned_by' => $request->user()->id,
                 'fecha_inicio' => $request->validated('fecha_inicio'),
                 'fecha_termino' => $request->validated('fecha_termino'),
                 'estado' => 'Asignado',
             ]);
+
+            Notifier::send(
+                $application->student?->user,
+                'Práctica asignada',
+                "Quedaste asignado a la práctica «{$offer->titulo}».",
+                route('student.practice.index'),
+            );
 
             return null;
         });
@@ -107,14 +140,19 @@ class PracticeController extends Controller
     }
 
     /**
-     * Solo se editan las fechas; el estado avanza con transition().
+     * Se editan las fechas y si el estudiante fue contratado; el estado avanza con transition().
      */
     public function update(PracticeRequest $request, Practice $practice): RedirectResponse
     {
-        $this->authorizePractice($request, $practice);
-        $practice->update($request->safe()->only(['fecha_inicio', 'fecha_termino']));
+        $this->authorizeManagement($request, $practice);
 
-        return back()->with('success', 'Fechas de la práctica actualizadas.');
+        $data = $request->safe()->only(['fecha_inicio', 'fecha_termino']);
+        if ($request->has('hired')) {
+            $data['hired'] = $request->filled('hired') ? $request->boolean('hired') : null;
+        }
+        $practice->update($data);
+
+        return back()->with('success', 'Datos de la práctica actualizados.');
     }
 
     /**
@@ -122,7 +160,7 @@ class PracticeController extends Controller
      */
     public function destroy(Request $request, Practice $practice): RedirectResponse
     {
-        abort_unless($request->user()->hasAnyRole(['Administrador', 'Super Administrador']), 403);
+        abort_unless($this->isAdmin($request->user()), 403);
 
         DB::transaction(function () use ($practice): void {
             $practice->application()->update(['status' => 'Postulado', 'reviewed_by' => null, 'decision_at' => null]);
@@ -134,45 +172,91 @@ class PracticeController extends Controller
 
     /**
      * Avanza la práctica al siguiente estado del flujo.
+     * Para pasar a "Evaluado" deben existir las dos rúbricas (supervisor y coordinador).
      */
     public function transition(Request $request, Practice $practice): RedirectResponse
     {
-        $this->authorizePractice($request, $practice);
+        $this->authorizeManagement($request, $practice);
+        $states = config('practices.states');
         $validated = $request->validate([
-            'estado' => ['required', Rule::in(array_slice(self::STATES, 1))],
+            'estado' => ['required', Rule::in(array_slice($states, 1))],
         ]);
 
-        $current = array_search($practice->estado, self::STATES, true);
-        $next = $current === false ? null : (self::STATES[$current + 1] ?? null);
+        $current = array_search($practice->estado, $states, true);
+        $next = $current === false ? null : ($states[$current + 1] ?? null);
 
         if ($next !== $validated['estado']) {
             return back()->with('error', 'La transición solicitada no está permitida.');
+        }
+
+        if ($next === 'Evaluado') {
+            $finalGrade = $practice->calculateFinalGrade();
+            if ($finalGrade === null) {
+                return back()->with('error', 'Para pasar a «Evaluado» faltan rúbricas: deben evaluar el supervisor de la empresa y el coordinador.');
+            }
+            $practice->final_grade = $finalGrade;
         }
 
         if ($next === 'Finalizada') {
             $practice->fecha_termino ??= today();
         }
 
-        DB::transaction(function () use ($practice, $next): void {
-            $practice->estado = $next;
-            $practice->save();
-            $practice->application()->update(['status' => $next]);
-        });
+        $this->moveTo($practice, $next);
 
         return back()->with('success', "La práctica pasó a «{$next}».");
     }
 
-    private function authorizePractice(Request $request, Practice $practice): void
+    /**
+     * Acta de cierre en PDF (enunciado, punto 4). Disponible con la nota final calculada.
+     */
+    public function acta(Request $request, Practice $practice): Response
     {
-        $user = $request->user();
-        if ($user->hasAnyRole(['Administrador', 'Super Administrador'])) {
-            return;
+        $this->loadPracticeRelations($practice);
+        abort_unless($this->canViewPractice($request->user(), $practice), 403);
+
+        if ($practice->final_grade === null) {
+            return back()->with('error', 'El acta se genera cuando la práctica tiene sus dos evaluaciones y su nota final.');
         }
 
-        abort_unless(
-            $user->hasRole('Coordinador')
-                && $practice->application()->whereHas('student', fn (Builder $student) => $student->where('career_id', $user->career_id))->exists(),
-            403,
+        $data = [
+            'practice' => $practice,
+            'competencies' => config('practices.competencies'),
+            'generatedAt' => now(),
+        ];
+        $fileName = 'acta-cierre-practica-'.$practice->id.'.pdf';
+
+        // Requiere: composer require barryvdh/laravel-dompdf
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView('practices.acta', $data)->download($fileName);
+        }
+
+        // Sin la librería se muestra la versión imprimible (Ctrl + P → Guardar como PDF).
+        return response()->view('practices.acta', $data + ['printable' => true]);
+    }
+
+    /**
+     * Cambia el estado de la práctica y de su postulación, y avisa al estudiante.
+     */
+    private function moveTo(Practice $practice, string $state): void
+    {
+        DB::transaction(function () use ($practice, $state): void {
+            $practice->estado = $state;
+            $practice->save();
+            $practice->application()->update(['status' => $state]);
+        });
+
+        $practice->loadMissing('application.student.user', 'application.offer');
+        Notifier::send(
+            $practice->application?->student?->user,
+            'Tu práctica cambió de estado',
+            "Tu práctica «{$practice->application?->offer?->titulo}» ahora está en «{$state}».",
+            route('student.practice.index'),
         );
+    }
+
+    private function authorizeManagement(Request $request, Practice $practice): void
+    {
+        $practice->loadMissing('application.student');
+        abort_unless($this->isAdmin($request->user()) || $this->isCareerCoordinator($request->user(), $practice), 403);
     }
 }

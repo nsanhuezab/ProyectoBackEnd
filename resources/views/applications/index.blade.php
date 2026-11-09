@@ -37,17 +37,6 @@
                             $companyName = $application->offer?->company?->razon_social ?? $application->offer?->empresa;
                             $score = (float) $application->matching_score;
                             $scoreColor = $score >= 70 ? 'bg-emerald-500' : ($score >= 40 ? 'bg-amber-500' : 'bg-red-600');
-                            $showData = [
-                                'estudiante' => $studentName,
-                                'correo' => $studentUser?->email,
-                                'carrera' => $application->student?->career?->nombre ?? $application->student?->carrera,
-                                'oferta' => $application->offer?->titulo,
-                                'empresa' => $companyName,
-                                'afinidad' => rtrim(rtrim(number_format($score, 2, ',', '.'), '0'), ',').'%',
-                                'estado' => $application->status,
-                                'fecha' => $application->created_at?->format('d-m-Y H:i'),
-                                'motivacion' => $application->motivation,
-                            ];
                         @endphp
                         <tr class="hover:bg-gray-50/70 transition-colors">
                             <td class="px-6 py-4">
@@ -79,8 +68,10 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1.5">
-                                    <x-action-button type="view" title="Ver postulación"
-                                        onclick="openShowModal('showApplicationModal', {{ json_encode($showData) }})" />
+                                    <a href="{{ route('applications.show', $application) }}" title="Ver postulación y mensajes"
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 shadow-sm hover:bg-gray-50 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                                    </a>
 
                                     @if ($application->cv_path)
                                         <a href="{{ route('applications.cv', $application) }}" title="Descargar CV"
@@ -123,29 +114,6 @@
         </p>
     </div>
 
-    {{-- Modal: detalle de la postulación --}}
-    <x-form-modal id="showApplicationModal" title="Detalle de la postulación" width="max-w-2xl">
-        <div class="px-6 py-5 space-y-4 text-[13px]">
-            @php
-                $detailFields = [
-                    'estudiante' => 'Estudiante', 'correo' => 'Correo', 'carrera' => 'Carrera', 'oferta' => 'Oferta',
-                    'empresa' => 'Empresa', 'afinidad' => 'Afinidad', 'estado' => 'Estado', 'fecha' => 'Fecha de postulación',
-                ];
-            @endphp
-            <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-                @foreach ($detailFields as $key => $label)
-                    <div>
-                        <dt class="text-[11.5px] text-slate-500">{{ $label }}</dt>
-                        <dd class="font-semibold text-slate-800" data-show="{{ $key }}"></dd>
-                    </div>
-                @endforeach
-            </dl>
-            <div>
-                <p class="text-[11.5px] text-slate-500 mb-1">Carta de motivación</p>
-                <p class="whitespace-pre-line text-slate-700 leading-relaxed" data-show="motivacion"></p>
-            </div>
-        </div>
-    </x-form-modal>
 @endsection
 
 @push('scripts')

@@ -62,6 +62,7 @@
                                 'area' => $offer->area,
                                 'perfil' => $offer->perfil,
                                 'nivel_requerido' => $offer->nivel_requerido,
+                                'min_gpa' => $offer->min_gpa,
                                 'modalidad' => $offer->modalidad,
                                 'duracion_semanas' => $offer->duracion_semanas,
                                 'horario' => $offer->horario,
@@ -83,6 +84,7 @@
                                 'remuneracion' => $offer->remuneracion !== null ? '$'.number_format((float) $offer->remuneracion, 0, ',', '.') : 'No informada',
                                 'cupos' => $offer->assigned_count.' de '.$offer->vacantes.' asignados · '.$offer->applications_count.' postulación(es)',
                                 'nivel_requerido' => $offer->nivel_requerido,
+                                'min_gpa' => $offer->min_gpa !== null ? number_format((float) $offer->min_gpa, 1, ',', '') : 'No exige',
                                 'habilidades' => implode(', ', $skills),
                                 'perfil' => $offer->perfil,
                             ];
@@ -159,7 +161,7 @@
                 $detailFields = [
                     'carreras' => 'Carreras', 'area' => 'Área', 'modalidad' => 'Modalidad', 'ubicacion' => 'Ubicación',
                     'duracion' => 'Duración', 'horario' => 'Horario', 'remuneracion' => 'Remuneración', 'cupos' => 'Cupos',
-                    'nivel_requerido' => 'Nivel requerido', 'habilidades' => 'Habilidades',
+                    'nivel_requerido' => 'Nivel requerido', 'min_gpa' => 'Promedio mínimo', 'habilidades' => 'Habilidades',
                 ];
             @endphp
             <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
@@ -258,7 +260,10 @@
                         <x-field label="Nivel requerido" for="{{ $mode }}-nivel_requerido" required>
                             <input type="text" id="{{ $mode }}-nivel_requerido" name="nivel_requerido" list="nivelesRequeridos" required maxlength="120" value="{{ $old('nivel_requerido') }}" class="form-input">
                         </x-field>
-                        <x-field label="Habilidades requeridas" for="{{ $mode }}-habilidades" required hint="Separadas por comas.">
+                        <x-field label="Promedio mínimo" for="{{ $mode }}-min_gpa" hint="Opcional, de 1,0 a 7,0.">
+                            <input type="number" id="{{ $mode }}-min_gpa" name="min_gpa" min="1" max="7" step="0.1" value="{{ $old('min_gpa') }}" placeholder="No exige" class="form-input">
+                        </x-field>
+                        <x-field label="Habilidades requeridas" for="{{ $mode }}-habilidades" required hint="Separadas por comas." class="sm:col-span-2">
                             <input type="text" id="{{ $mode }}-habilidades" name="habilidades" required value="{{ is_array($oldSkills) ? implode(', ', $oldSkills) : $oldSkills }}" placeholder="PHP, SQL, Git" class="form-input">
                         </x-field>
                     </div>

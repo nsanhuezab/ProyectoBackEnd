@@ -30,7 +30,7 @@
 <?php unset($__componentOriginalf8d4ea307ab1e58d4e472a43c8548d8e); ?>
 <?php endif; ?>
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
             <?php if (isset($component)) { $__componentOriginal527fae77f4db36afc8c8b7e9f5f81682 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stat-card','data' => ['label' => 'Asignadas','value' => $counts['Asignado'],'color' => 'slate']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -81,6 +81,26 @@
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes(['label' => 'Informe entregado','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($counts['Informe Entregado']),'color' => 'amber']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682)): ?>
+<?php $attributes = $__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682; ?>
+<?php unset($__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal527fae77f4db36afc8c8b7e9f5f81682)): ?>
+<?php $component = $__componentOriginal527fae77f4db36afc8c8b7e9f5f81682; ?>
+<?php unset($__componentOriginal527fae77f4db36afc8c8b7e9f5f81682); ?>
+<?php endif; ?>
+            <?php if (isset($component)) { $__componentOriginal527fae77f4db36afc8c8b7e9f5f81682 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stat-card','data' => ['label' => 'Evaluadas','value' => $counts['Evaluado'],'color' => 'red']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('stat-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'Evaluadas','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($counts['Evaluado']),'color' => 'red']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682)): ?>
@@ -148,6 +168,7 @@
                             $rowData = [
                                 'fecha_inicio' => $practice->fecha_inicio?->toDateString(),
                                 'fecha_termino' => $practice->fecha_termino?->toDateString(),
+                                'hired' => $practice->hired === null ? '' : ($practice->hired ? '1' : '0'),
                             ];
                         ?>
                         <tr class="hover:bg-gray-50/70 transition-colors">
@@ -185,7 +206,8 @@
                                             <?php endif; ?>
                                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </div>
-                                    <div class="mt-1.5"><?php if (isset($component)) { $__componentOriginal8c81617a70e11bcf247c4db924ab1b62 = $component; } ?>
+                                    <div class="mt-1.5 flex items-center gap-2">
+                                        <?php if (isset($component)) { $__componentOriginal8c81617a70e11bcf247c4db924ab1b62 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal8c81617a70e11bcf247c4db924ab1b62 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.status-badge','data' => ['status' => $practice->estado]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('status-badge'); ?>
@@ -204,11 +226,20 @@
 <?php if (isset($__componentOriginal8c81617a70e11bcf247c4db924ab1b62)): ?>
 <?php $component = $__componentOriginal8c81617a70e11bcf247c4db924ab1b62; ?>
 <?php unset($__componentOriginal8c81617a70e11bcf247c4db924ab1b62); ?>
-<?php endif; ?></div>
+<?php endif; ?>
+                                        <?php if($practice->final_grade !== null): ?>
+                                            <span class="text-[12px] font-extrabold <?php echo e($practice->isApproved() ? 'text-emerald-700' : 'text-red-700'); ?>">Nota <?php echo e(number_format((float) $practice->final_grade, 1, ',', '')); ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <p class="mt-1 text-[11px] text-slate-500"><?php echo e($practice->logs_count); ?> bitácora(s) · <?php echo e($practice->evaluations_count); ?>/2 rúbricas</p>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1.5">
+                                    <a href="<?php echo e(route('practices.show', $practice)); ?>" title="Ver detalle, bitácora y rúbricas"
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 shadow-sm hover:bg-gray-50 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    </a>
                                     <?php if($nextState): ?>
                                         <form id="transition-practice-<?php echo e($practice->id); ?>" action="<?php echo e(route('practices.transition', $practice)); ?>" method="POST">
                                             <?php echo csrf_field(); ?>
@@ -238,14 +269,14 @@
 
                                     <?php if (isset($component)) { $__componentOriginald4c6978101b1c254eb70511d3c21c03f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald4c6978101b1c254eb70511d3c21c03f = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-button','data' => ['type' => 'edit','title' => 'Editar fechas','onclick' => 'openEditModal(\'editPracticeModal\', '.e(json_encode(route('practices.update', $practice))).', '.e(json_encode($rowData)).', '.e(json_encode($studentName.' · '.$application?->offer?->titulo)).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-button','data' => ['type' => 'edit','title' => 'Editar fechas y contratación','onclick' => 'openEditModal(\'editPracticeModal\', '.e(json_encode(route('practices.update', $practice))).', '.e(json_encode($rowData)).', '.e(json_encode($studentName.' · '.$application?->offer?->titulo)).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('action-button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['type' => 'edit','title' => 'Editar fechas','onclick' => 'openEditModal(\'editPracticeModal\', '.e(json_encode(route('practices.update', $practice))).', '.e(json_encode($rowData)).', '.e(json_encode($studentName.' · '.$application?->offer?->titulo)).')']); ?>
+<?php $component->withAttributes(['type' => 'edit','title' => 'Editar fechas y contratación','onclick' => 'openEditModal(\'editPracticeModal\', '.e(json_encode(route('practices.update', $practice))).', '.e(json_encode($rowData)).', '.e(json_encode($studentName.' · '.$application?->offer?->titulo)).')']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginald4c6978101b1c254eb70511d3c21c03f)): ?>
@@ -453,14 +484,14 @@
     
     <?php if (isset($component)) { $__componentOriginaldf85e6552b95df616d59caebcbf2473d = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginaldf85e6552b95df616d59caebcbf2473d = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-modal','data' => ['id' => 'editPracticeModal','title' => 'Editar fechas de la práctica','subtitle' => '']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-modal','data' => ['id' => 'editPracticeModal','title' => 'Editar práctica','subtitle' => '']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('form-modal'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['id' => 'editPracticeModal','title' => 'Editar fechas de la práctica','subtitle' => '']); ?>
+<?php $component->withAttributes(['id' => 'editPracticeModal','title' => 'Editar práctica','subtitle' => '']); ?>
         <form action="<?php echo e(old('_action', '#')); ?>" method="POST" class="space-y-5 p-6">
             <?php echo csrf_field(); ?>
             <?php echo method_field('PUT'); ?>
@@ -532,18 +563,43 @@
 <?php unset($__componentOriginalae4c123bc9806121d87d234de2f27a3b); ?>
 <?php endif; ?>
             </div>
+            <?php if (isset($component)) { $__componentOriginalae4c123bc9806121d87d234de2f27a3b = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalae4c123bc9806121d87d234de2f27a3b = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.field','data' => ['label' => '¿La empresa contrató al estudiante después de la práctica?','for' => 'edit-hired','hint' => 'Se usa para la tasa de empleabilidad del panel de indicadores.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => '¿La empresa contrató al estudiante después de la práctica?','for' => 'edit-hired','hint' => 'Se usa para la tasa de empleabilidad del panel de indicadores.']); ?>
+                <select id="edit-hired" name="hired" class="form-input">
+                    <option value="">Sin información</option>
+                    <option value="1" <?php if($old('hired') === '1'): echo 'selected'; endif; ?>>Sí, fue contratado</option>
+                    <option value="0" <?php if($old('hired') === '0'): echo 'selected'; endif; ?>>No</option>
+                </select>
+             <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalae4c123bc9806121d87d234de2f27a3b)): ?>
+<?php $attributes = $__attributesOriginalae4c123bc9806121d87d234de2f27a3b; ?>
+<?php unset($__attributesOriginalae4c123bc9806121d87d234de2f27a3b); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalae4c123bc9806121d87d234de2f27a3b)): ?>
+<?php $component = $__componentOriginalae4c123bc9806121d87d234de2f27a3b; ?>
+<?php unset($__componentOriginalae4c123bc9806121d87d234de2f27a3b); ?>
+<?php endif; ?>
             <p class="text-[12px] text-slate-500">El estado se cambia con el botón de avanzar en la tabla.</p>
 
             <?php if (isset($component)) { $__componentOriginal98d29adaa4406bec3dfa33b112d9a220 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal98d29adaa4406bec3dfa33b112d9a220 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-actions','data' => ['modal' => 'editPracticeModal','label' => 'Guardar fechas']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.form-actions','data' => ['modal' => 'editPracticeModal','label' => 'Guardar cambios']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('form-actions'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['modal' => 'editPracticeModal','label' => 'Guardar fechas']); ?>
+<?php $component->withAttributes(['modal' => 'editPracticeModal','label' => 'Guardar cambios']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal98d29adaa4406bec3dfa33b112d9a220)): ?>

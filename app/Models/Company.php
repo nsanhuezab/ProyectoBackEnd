@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $fillable = [
         'owner_user_id',
@@ -31,5 +32,15 @@ class Company extends Model
     public function offers(): HasMany
     {
         return $this->hasMany(Offer::class, 'empresa_id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(CompanyReview::class);
+    }
+
+    public function activityLabel(): string
+    {
+        return 'Empresa «'.$this->razon_social.'»';
     }
 }

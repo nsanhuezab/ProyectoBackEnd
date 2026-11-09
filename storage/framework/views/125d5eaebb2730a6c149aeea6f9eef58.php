@@ -4,14 +4,15 @@
     <div class="space-y-6">
         <?php if (isset($component)) { $__componentOriginalf8d4ea307ab1e58d4e472a43c8548d8e = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf8d4ea307ab1e58d4e472a43c8548d8e = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.page-header','data' => ['title' => 'Estudiantes','description' => 'Vincula las cuentas de estudiante con su carrera, nivel de avance y habilidades.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.page-header','data' => ['title' => 'Estudiantes','description' => $can['manage'] ? 'Vincula las cuentas de estudiante con su carrera, nivel, promedio y habilidades. El coordinador valida cada perfil.' : 'Revisa y valida los datos académicos de los estudiantes de tu carrera.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('page-header'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['title' => 'Estudiantes','description' => 'Vincula las cuentas de estudiante con su carrera, nivel de avance y habilidades.']); ?>
+<?php $component->withAttributes(['title' => 'Estudiantes','description' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($can['manage'] ? 'Vincula las cuentas de estudiante con su carrera, nivel, promedio y habilidades. El coordinador valida cada perfil.' : 'Revisa y valida los datos académicos de los estudiantes de tu carrera.')]); ?>
+            <?php if($can['manage']): ?>
              <?php $__env->slot('actions', null, []); ?> 
                 <button type="button" onclick="openCreateModal('createStudentModal')"
                     class="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow hover:bg-slate-800 cursor-pointer">
@@ -19,6 +20,7 @@
                     Nuevo perfil
                 </button>
              <?php $__env->endSlot(); ?>
+            <?php endif; ?>
          <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginalf8d4ea307ab1e58d4e472a43c8548d8e)): ?>
@@ -53,14 +55,14 @@
 <?php endif; ?>
             <?php if (isset($component)) { $__componentOriginal527fae77f4db36afc8c8b7e9f5f81682 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stat-card','data' => ['label' => 'Con postulaciones','value' => $counts['con_postulaciones'],'color' => 'blue']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stat-card','data' => ['label' => 'Validados por coordinador','value' => $counts['validados'],'color' => 'emerald']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('stat-card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['label' => 'Con postulaciones','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($counts['con_postulaciones']),'color' => 'blue']); ?>
+<?php $component->withAttributes(['label' => 'Validados por coordinador','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($counts['validados']),'color' => 'emerald']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682)): ?>
@@ -73,14 +75,14 @@
 <?php endif; ?>
             <?php if (isset($component)) { $__componentOriginal527fae77f4db36afc8c8b7e9f5f81682 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682 = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stat-card','data' => ['label' => 'Sin postulaciones','value' => $counts['sin_postulaciones'],'color' => 'muted']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.stat-card','data' => ['label' => 'Por validar','value' => $counts['por_validar'],'color' => 'amber']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('stat-card'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['label' => 'Sin postulaciones','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($counts['sin_postulaciones']),'color' => 'muted']); ?>
+<?php $component->withAttributes(['label' => 'Por validar','value' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($counts['por_validar']),'color' => 'amber']); ?>
 <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal527fae77f4db36afc8c8b7e9f5f81682)): ?>
@@ -113,9 +115,10 @@
                         <th class="px-6 py-3.5">ID</th>
                         <th class="px-6 py-3.5">Estudiante</th>
                         <th class="px-6 py-3.5">Carrera</th>
-                        <th class="px-6 py-3.5">Nivel</th>
+                        <th class="px-6 py-3.5">Nivel / año / promedio</th>
                         <th class="px-6 py-3.5">Habilidades</th>
                         <th class="px-6 py-3.5 text-center">Postulaciones</th>
+                        <th class="px-6 py-3.5 text-center">Validación</th>
                         <th class="px-6 py-3.5 text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -130,6 +133,8 @@
                                 'career_id' => $student->career_id,
                                 'nivel_avance' => $student->nivel_avance,
                                 'habilidades' => implode(', ', $skills),
+                                'year_level' => $student->year_level,
+                                'gpa' => $student->gpa,
                             ];
                         ?>
                         <tr class="hover:bg-gray-50/70 transition-colors">
@@ -150,6 +155,10 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex px-2.5 py-1 rounded-full text-[11.5px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"><?php echo e($student->nivel_avance); ?></span>
+                                <p class="mt-1 text-[12px] text-slate-500">
+                                    <?php echo e($student->year_level ? $student->year_level.'° año' : 'Año sin registrar'); ?> ·
+                                    Promedio <b class="text-slate-700"><?php echo e($student->gpa !== null ? number_format((float) $student->gpa, 1, ',', '') : '—'); ?></b>
+                                </p>
                             </td>
                             <td class="px-6 py-4" data-search="<?php echo e(implode(' ', $skills)); ?>">
                                 <div class="flex flex-wrap gap-1 max-w-[240px]">
@@ -169,8 +178,44 @@
 
                                 </span>
                             </td>
+                            <td class="px-6 py-4 text-center">
+                                <?php if($student->validated_at): ?>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                        title="<?php echo e($student->validator ? 'Por '.trim($student->validator->name.' '.$student->validator->last_name) : ''); ?> el <?php echo e($student->validated_at->format('d-m-Y')); ?>">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Validado
+                                    </span>
+                                <?php else: ?>
+                                    <span class="inline-flex px-2.5 py-1 rounded-full text-[11.5px] font-bold bg-amber-50 text-amber-700 border border-amber-200">Por validar</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1.5">
+                                    <?php if($can['validate'] && ! $student->validated_at): ?>
+                                        <form id="validate-student-<?php echo e($student->id); ?>" action="<?php echo e(route('students.validate', $student)); ?>" method="POST">
+                                            <?php echo csrf_field(); ?>
+                                            <?php if (isset($component)) { $__componentOriginald4c6978101b1c254eb70511d3c21c03f = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginald4c6978101b1c254eb70511d3c21c03f = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-button','data' => ['type' => 'approve','title' => 'Validar datos del estudiante','onclick' => 'confirmSubmit(\'validate-student-'.e($student->id).'\', { title: \'¿Validar perfil?\', text: '.e(json_encode('Confirmas que los datos académicos de '.$fullName.' son correctos.')).', confirmText: \'Sí, validar\', color: \'#047857\', icon: \'question\' })']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('action-button'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['type' => 'approve','title' => 'Validar datos del estudiante','onclick' => 'confirmSubmit(\'validate-student-'.e($student->id).'\', { title: \'¿Validar perfil?\', text: '.e(json_encode('Confirmas que los datos académicos de '.$fullName.' son correctos.')).', confirmText: \'Sí, validar\', color: \'#047857\', icon: \'question\' })']); ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginald4c6978101b1c254eb70511d3c21c03f)): ?>
+<?php $attributes = $__attributesOriginald4c6978101b1c254eb70511d3c21c03f; ?>
+<?php unset($__attributesOriginald4c6978101b1c254eb70511d3c21c03f); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginald4c6978101b1c254eb70511d3c21c03f)): ?>
+<?php $component = $__componentOriginald4c6978101b1c254eb70511d3c21c03f; ?>
+<?php unset($__componentOriginald4c6978101b1c254eb70511d3c21c03f); ?>
+<?php endif; ?>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if($can['manage']): ?>
                                     <?php if (isset($component)) { $__componentOriginald4c6978101b1c254eb70511d3c21c03f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginald4c6978101b1c254eb70511d3c21c03f = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.action-button','data' => ['type' => 'edit','title' => 'Editar perfil','onclick' => 'openEditModal(\'editStudentModal\', '.e(json_encode(route('students.update', $student))).', '.e(json_encode($rowData)).', '.e(json_encode('#'.$student->id_student.' · '.$fullName)).')']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -215,6 +260,7 @@
 <?php unset($__componentOriginald4c6978101b1c254eb70511d3c21c03f); ?>
 <?php endif; ?>
                                     </form>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
@@ -240,6 +286,7 @@
         <option value="Egresado"></option>
     </datalist>
 
+    <?php if($can['manage']): ?>
     <?php $__currentLoopData = ['create' => 'Nuevo perfil de estudiante', 'edit' => 'Editar perfil de estudiante']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mode => $modalTitle): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
         <?php $modalId = $mode.'StudentModal'; ?>
         <?php if (isset($component)) { $__componentOriginaldf85e6552b95df616d59caebcbf2473d = $component; } ?>
@@ -379,6 +426,53 @@
 <?php endif; ?>
                     <?php if (isset($component)) { $__componentOriginalae4c123bc9806121d87d234de2f27a3b = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalae4c123bc9806121d87d234de2f27a3b = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.field','data' => ['label' => 'Año que cursa','for' => ''.e($mode).'-year_level']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'Año que cursa','for' => ''.e($mode).'-year_level']); ?>
+                        <select id="<?php echo e($mode); ?>-year_level" name="year_level" class="form-input">
+                            <option value="">Sin registrar</option>
+                            <?php for($year = 1; $year <= 7; $year++): ?>
+                                <option value="<?php echo e($year); ?>" <?php if((string) $old('year_level') === (string) $year): echo 'selected'; endif; ?>><?php echo e($year); ?>° año</option>
+                            <?php endfor; ?>
+                        </select>
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalae4c123bc9806121d87d234de2f27a3b)): ?>
+<?php $attributes = $__attributesOriginalae4c123bc9806121d87d234de2f27a3b; ?>
+<?php unset($__attributesOriginalae4c123bc9806121d87d234de2f27a3b); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalae4c123bc9806121d87d234de2f27a3b)): ?>
+<?php $component = $__componentOriginalae4c123bc9806121d87d234de2f27a3b; ?>
+<?php unset($__componentOriginalae4c123bc9806121d87d234de2f27a3b); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalae4c123bc9806121d87d234de2f27a3b = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalae4c123bc9806121d87d234de2f27a3b = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.field','data' => ['label' => 'Promedio de notas','for' => ''.e($mode).'-gpa','hint' => 'Escala 1,0 a 7,0. Algunas ofertas exigen un promedio mínimo.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('field'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['label' => 'Promedio de notas','for' => ''.e($mode).'-gpa','hint' => 'Escala 1,0 a 7,0. Algunas ofertas exigen un promedio mínimo.']); ?>
+                        <input type="number" id="<?php echo e($mode); ?>-gpa" name="gpa" min="1" max="7" step="0.1" value="<?php echo e($old('gpa')); ?>" placeholder="Ej: 5.6" class="form-input">
+                     <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalae4c123bc9806121d87d234de2f27a3b)): ?>
+<?php $attributes = $__attributesOriginalae4c123bc9806121d87d234de2f27a3b; ?>
+<?php unset($__attributesOriginalae4c123bc9806121d87d234de2f27a3b); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalae4c123bc9806121d87d234de2f27a3b)): ?>
+<?php $component = $__componentOriginalae4c123bc9806121d87d234de2f27a3b; ?>
+<?php unset($__componentOriginalae4c123bc9806121d87d234de2f27a3b); ?>
+<?php endif; ?>
+                    <?php if (isset($component)) { $__componentOriginalae4c123bc9806121d87d234de2f27a3b = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalae4c123bc9806121d87d234de2f27a3b = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.field','data' => ['label' => 'Habilidades','for' => ''.e($mode).'-habilidades','class' => 'sm:col-span-2','hint' => 'Sepáralas con comas. Se usan para calcular la afinidad con las ofertas.']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('field'); ?>
 <?php if ($component->shouldRender()): ?>
@@ -432,6 +526,7 @@
 <?php unset($__componentOriginaldf85e6552b95df616d59caebcbf2473d); ?>
 <?php endif; ?>
     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+    <?php endif; ?>
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startPush('scripts'); ?>

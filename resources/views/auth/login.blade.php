@@ -15,6 +15,19 @@
 
     <div class="bg-white p-6 rounded-lg shadow-sm w-full max-w-md text-center border border-gray-200">
 
+        {{-- Volver: a la página anterior si era el inicio o el registro; si no, al inicio.
+             (Si se llegó aquí porque una página pedía sesión, "atrás" volvería a mandar al login.) --}}
+        @php
+            $previousUrl = url()->previous();
+            $backUrl = in_array($previousUrl, [url('/'), route('register')], true) ? $previousUrl : url('/');
+        @endphp
+        <div class="text-left -mt-1 mb-2">
+            <a href="{{ $backUrl }}"
+                class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
         <!-- Logo Institucional -->
         <img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/UCSC%2C_Universidad_Cat%C3%B3lica_de_la_Sant%C3%ADsima_Concepci%C3%B3n.png"
             alt="Logo Institucional" class="mx-auto mb-3 h-20 object-contain">
@@ -28,6 +41,11 @@
             <div
                 class="bg-gray-50 border border-gray-800 text-gray-800 py-2 px-3 rounded text-sm text-left mb-4 flex items-center gap-2">
                 <i class="bi bi-exclamation-triangle"></i> {{ session('error') }}
+            </div>
+        @elseif (session('status'))
+            <div
+                class="bg-green-50 border border-green-700 text-green-800 py-2 px-3 rounded text-sm text-left mb-4 flex items-center gap-2">
+                <i class="bi bi-check-circle"></i> {{ session('status') }}
             </div>
         @elseif (session('msg') === 'sesion_cerrada')
             <div

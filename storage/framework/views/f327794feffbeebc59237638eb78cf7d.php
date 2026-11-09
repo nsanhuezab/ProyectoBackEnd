@@ -14,6 +14,17 @@
 
     <div class="bg-white p-6 rounded-lg shadow-sm w-full max-w-md mx-auto text-center border border-gray-200">
 
+        
+        <?php
+            $backUrl = url()->previous() !== url()->current() ? url()->previous() : url('/');
+        ?>
+        <div class="text-left -mt-1 mb-2">
+            <a href="<?php echo e($backUrl); ?>"
+                class="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+
         <div class="flex justify-center mb-3">
         <img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/UCSC%2C_Universidad_Cat%C3%B3lica_de_la_Sant%C3%ADsima_Concepci%C3%B3n.png"
             alt="Logo Institucional" class="mx-auto mb-3 h-20 object-contain">

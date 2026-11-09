@@ -2,14 +2,20 @@
 
 use App\Http\Controllers\Admin\ManagementPageController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanyPortalController;
 use App\Http\Controllers\CoordinatorController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfferController;
 use App\Http\Controllers\PracticeController;
+use App\Http\Controllers\PracticeEvaluationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentPracticeController;
 use App\Http\Middleware\UseLocalDemoUser;
 use Illuminate\Support\Facades\Route;
 
@@ -17,12 +23,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-$dashboardMiddleware = app()->environment('local') && config('app.demo_mode')
-    ? [UseLocalDemoUser::class]
-    : ['auth', 'verified'];
-$administratorMiddleware = app()->environment('local') && config('app.demo_mode')
-    ? [UseLocalDemoUser::class]
-    : ['auth', 'verified', 'role:Administrador|Super Administrador'];
+/*
+ | En modo demo (solo local) UseLocalDemoUser reemplaza al login: usa la sesión real si existe
+ | o entra como el Administrador. En ambos casos se sigue exigiendo el rol de cada ruta.
+ */
+$isDemo = app()->environment('local') && config('app.demo_mode');
+$authenticated = $isDemo ? [UseLocalDemoUser::class] : ['auth', 'verified'];
+
+$dashboardMiddleware = $authenticated;
+$administratorMiddleware = [...$authenticated, 'role:Administrador|Super Administrador'];
 
 Route::get('/dashboard', [UserController::class, 'index'])
     ->middleware($dashboardMiddleware)
@@ -50,12 +59,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-$staffMiddleware = app()->environment('local') && config('app.demo_mode')
-    ? [UseLocalDemoUser::class]
-    : ['auth', 'verified', 'role:Administrador|Super Administrador|Coordinador'];
-$offersMiddleware = app()->environment('local') && config('app.demo_mode')
-    ? [UseLocalDemoUser::class]
-    : ['auth', 'role:Administrador|Super Administrador|Coordinador|Empresa'];
+$staffMiddleware = [...$authenticated, 'role:Administrador|Super Administrador|Coordinador'];
+$offersMiddleware = [...$authenticated, 'role:Administrador|Super Administrador|Coordinador|Empresa'];
+$companyMiddleware = [...$authenticated, 'role:Empresa|Administrador|Super Administrador'];
+// Rutas compartidas por varios roles: cada controlador revisa quién puede ver qué.
+$anyUserMiddleware = $authenticated;
 
 /*
  | Mantenedores (sin prefijo /admin). Cada módulo tiene su controlador y su vista.
@@ -68,12 +76,18 @@ Route::middleware($administratorMiddleware)->group(function () {
     Route::resource('coordinators', CoordinatorController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['coordinators' => 'coordinator']);
-    Route::resource('students', StudentController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('students', StudentController::class)->only(['store', 'update', 'destroy']);
     Route::resource('companies', CompanyController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    // RF-11: historial de cambios
+    Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
 });
 
 // Administración y Coordinador (el coordinador solo ve lo de su carrera)
 Route::middleware($staffMiddleware)->group(function () {
+    Route::get('students', [StudentController::class, 'index'])->name('students.index');
+    Route::post('students/{student}/validate', [StudentController::class, 'validateProfile'])->name('students.validate');
+
     Route::get('applications', [ApplicationController::class, 'index'])->name('applications.index');
     Route::post('applications/{application}/assign', [ApplicationController::class, 'assign'])->name('applications.assign');
     Route::post('applications/{application}/reject', [ApplicationController::class, 'reject'])->name('applications.reject');
@@ -83,12 +97,26 @@ Route::middleware($staffMiddleware)->group(function () {
     Route::post('practices/{practice}/transition', [PracticeController::class, 'transition'])->name('practices.transition');
 
     Route::post('offers/{offer}/approve', [OfferController::class, 'approve'])->name('offers.approve');
+
+    // Panel de indicadores (enunciado, punto 5)
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
+    Route::get('reports/excel', [ReportController::class, 'excel'])->name('reports.excel');
 });
 
 // Ofertas: Administración, Coordinador (aprueba) y Empresa (publica las suyas)
 Route::middleware($offersMiddleware)->group(function () {
     Route::resource('offers', OfferController::class)->only(['index', 'store', 'update', 'destroy']);
 });
+
+// Área empresa
+Route::middleware($companyMiddleware)
+    ->prefix('company')
+    ->name('company.')
+    ->group(function () {
+        Route::get('applicants', [CompanyPortalController::class, 'applicants'])->name('applicants');
+        Route::get('practices', [CompanyPortalController::class, 'practices'])->name('practices');
+    });
 
 // Área estudiante
 Route::middleware(['auth', 'role:Estudiante'])
@@ -98,13 +126,28 @@ Route::middleware(['auth', 'role:Estudiante'])
         Route::get('offers', [ManagementPageController::class, 'studentOffers'])->name('offers.view');
         Route::get('offers/data', [OfferController::class, 'studentData'])->name('offers.data');
         Route::get('my-applications', [ManagementPageController::class, 'studentApplications'])->name('applications.view');
-        Route::get('applications', [ApplicationController::class, 'studentData'])->name('applications.index');
         Route::post('applications', [ApplicationController::class, 'store'])->name('applications.store');
         Route::delete('applications/{application}', [ApplicationController::class, 'studentDestroy'])->name('applications.destroy');
+
+        // Mi práctica: bitácora quincenal y evaluación de la empresa
+        Route::get('practice', [StudentPracticeController::class, 'index'])->name('practice.index');
+        Route::post('practices/{practice}/logs', [StudentPracticeController::class, 'storeLog'])->name('practice.logs.store');
+        Route::delete('practice-logs/{log}', [StudentPracticeController::class, 'destroyLog'])->name('practice.logs.destroy');
+        Route::post('practices/{practice}/review', [StudentPracticeController::class, 'storeReview'])->name('practice.review.store');
     });
 
-Route::middleware('auth')->group(function () {
+// Compartidas: cada controlador revisa si el usuario participa en el registro
+Route::middleware($anyUserMiddleware)->group(function () {
+    Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
+    Route::post('applications/{application}/messages', [ApplicationController::class, 'storeMessage'])->name('applications.messages.store');
     Route::get('applications/{application}/cv', [ApplicationController::class, 'cv'])->name('applications.cv');
+
+    Route::get('practices/{practice}', [PracticeController::class, 'show'])->name('practices.show');
+    Route::get('practices/{practice}/acta', [PracticeController::class, 'acta'])->name('practices.acta');
+    Route::post('practices/{practice}/evaluations', [PracticeEvaluationController::class, 'store'])->name('practices.evaluations.store');
+
+    Route::get('notifications/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 });
 
 require __DIR__.'/auth.php';

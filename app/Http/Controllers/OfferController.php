@@ -7,6 +7,7 @@ use App\Http\Requests\OfferRequest;
 use App\Models\Career;
 use App\Models\Company;
 use App\Models\Offer;
+use App\Support\Notifier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -86,6 +87,8 @@ class OfferController extends Controller
             return $offer;
         });
 
+        $this->notifyPendingReview($offer, 'Nueva oferta por aprobar');
+
         return back()->with('success', "Oferta «{$offer->titulo}» creada. Queda pendiente de aprobación.");
     }
 
@@ -107,6 +110,8 @@ class OfferController extends Controller
             ));
             $offer->careers()->sync($data['career_ids']);
         });
+
+        $this->notifyPendingReview($offer, 'Oferta modificada por aprobar');
 
         return back()->with('success', "Oferta «{$offer->titulo}» actualizada. Vuelve a quedar pendiente de aprobación.");
     }
@@ -145,7 +150,30 @@ class OfferController extends Controller
             ? "Oferta «{$offer->titulo}» aprobada. Ya es visible para los estudiantes."
             : "Oferta «{$offer->titulo}» rechazada.";
 
+        $offer->loadMissing('company.owner');
+        Notifier::send(
+            $offer->company?->owner,
+            $validated['estado'] === 'Aprobada' ? 'Oferta aprobada' : 'Oferta rechazada',
+            $validated['estado'] === 'Aprobada'
+                ? "Tu oferta «{$offer->titulo}» fue aprobada y ya la ven los estudiantes."
+                : "Tu oferta «{$offer->titulo}» fue rechazada por la coordinación.",
+            route('offers.index'),
+        );
+
         return back()->with('success', $message);
+    }
+
+    /**
+     * Avisa a los coordinadores de las carreras de la oferta que hay una oferta por revisar.
+     */
+    private function notifyPendingReview(Offer $offer, string $title): void
+    {
+        Notifier::send(
+            Notifier::coordinatorsOf($offer->careers()->pluck('careers.id')),
+            $title,
+            "«{$offer->titulo}» de {$offer->empresa} espera tu aprobación.",
+            route('offers.index'),
+        );
     }
 
     /**

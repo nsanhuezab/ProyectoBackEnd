@@ -14,10 +14,11 @@
             </x-slot:actions>
         </x-page-header>
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
             <x-stat-card label="Asignadas" :value="$counts['Asignado']" color="slate" />
             <x-stat-card label="En curso" :value="$counts['En Curso']" color="blue" />
             <x-stat-card label="Informe entregado" :value="$counts['Informe Entregado']" color="amber" />
+            <x-stat-card label="Evaluadas" :value="$counts['Evaluado']" color="red" />
             <x-stat-card label="Finalizadas" :value="$counts['Finalizada']" color="emerald" />
         </div>
 
@@ -47,6 +48,7 @@
                             $rowData = [
                                 'fecha_inicio' => $practice->fecha_inicio?->toDateString(),
                                 'fecha_termino' => $practice->fecha_termino?->toDateString(),
+                                'hired' => $practice->hired === null ? '' : ($practice->hired ? '1' : '0'),
                             ];
                         @endphp
                         <tr class="hover:bg-gray-50/70 transition-colors">
@@ -83,11 +85,21 @@
                                             @endif
                                         @endforeach
                                     </div>
-                                    <div class="mt-1.5"><x-status-badge :status="$practice->estado" /></div>
+                                    <div class="mt-1.5 flex items-center gap-2">
+                                        <x-status-badge :status="$practice->estado" />
+                                        @if ($practice->final_grade !== null)
+                                            <span class="text-[12px] font-extrabold {{ $practice->isApproved() ? 'text-emerald-700' : 'text-red-700' }}">Nota {{ number_format((float) $practice->final_grade, 1, ',', '') }}</span>
+                                        @endif
+                                    </div>
+                                    <p class="mt-1 text-[11px] text-slate-500">{{ $practice->logs_count }} bitácora(s) · {{ $practice->evaluations_count }}/2 rúbricas</p>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-center gap-1.5">
+                                    <a href="{{ route('practices.show', $practice) }}" title="Ver detalle, bitácora y rúbricas"
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 shadow-sm hover:bg-gray-50 transition">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    </a>
                                     @if ($nextState)
                                         <form id="transition-practice-{{ $practice->id }}" action="{{ route('practices.transition', $practice) }}" method="POST">
                                             @csrf
@@ -97,7 +109,7 @@
                                         </form>
                                     @endif
 
-                                    <x-action-button type="edit" title="Editar fechas"
+                                    <x-action-button type="edit" title="Editar fechas y contratación"
                                         onclick="openEditModal('editPracticeModal', {{ json_encode(route('practices.update', $practice)) }}, {{ json_encode($rowData) }}, {{ json_encode($studentName.' · '.$application?->offer?->titulo) }})" />
 
                                     @if ($canDelete)
@@ -157,7 +169,7 @@
     </x-form-modal>
 
     {{-- Modal: editar fechas --}}
-    <x-form-modal id="editPracticeModal" title="Editar fechas de la práctica" subtitle="">
+    <x-form-modal id="editPracticeModal" title="Editar práctica" subtitle="">
         <form action="{{ old('_action', '#') }}" method="POST" class="space-y-5 p-6">
             @csrf
             @method('PUT')
@@ -174,9 +186,16 @@
                     <input type="date" id="edit-fecha_termino" name="fecha_termino" value="{{ $old('fecha_termino') }}" class="form-input">
                 </x-field>
             </div>
+            <x-field label="¿La empresa contrató al estudiante después de la práctica?" for="edit-hired" hint="Se usa para la tasa de empleabilidad del panel de indicadores.">
+                <select id="edit-hired" name="hired" class="form-input">
+                    <option value="">Sin información</option>
+                    <option value="1" @selected($old('hired') === '1')>Sí, fue contratado</option>
+                    <option value="0" @selected($old('hired') === '0')>No</option>
+                </select>
+            </x-field>
             <p class="text-[12px] text-slate-500">El estado se cambia con el botón de avanzar en la tabla.</p>
 
-            <x-form-actions modal="editPracticeModal" label="Guardar fechas" />
+            <x-form-actions modal="editPracticeModal" label="Guardar cambios" />
         </form>
     </x-form-modal>
 @endsection

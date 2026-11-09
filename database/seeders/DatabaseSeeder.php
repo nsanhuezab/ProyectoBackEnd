@@ -18,6 +18,10 @@ class DatabaseSeeder extends Seeder
             OfferSeeder::class,
             ApplicationSeeder::class,
             PracticeSeeder::class,
+            PracticeLogSeeder::class,
+            PracticeEvaluationSeeder::class,
+            CompanyReviewSeeder::class,
+            ApplicationMessageSeeder::class,
         ]);
     }
 }
