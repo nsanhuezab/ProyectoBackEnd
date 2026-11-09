@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             StudentSeeder::class,
             OfferSeeder::class,
             ApplicationSeeder::class,
+            DemoCvSeeder::class,
             PracticeSeeder::class,
             PracticeLogSeeder::class,
             PracticeEvaluationSeeder::class,

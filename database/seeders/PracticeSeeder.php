@@ -51,11 +51,14 @@ class PracticeSeeder extends Seeder
                 ],
             );
 
-            $application->update([
+            // La postulación se envía antes de que la coordinación la resuelva.
+            $decisionAt = $data['fecha_inicio']->copy()->subDays(5);
+            $application->forceFill([
                 'status' => $practice->estado,
                 'reviewed_by' => $coordinator->id,
-                'decision_at' => $data['fecha_inicio']->copy()->subDays(5),
-            ]);
+                'decision_at' => $decisionAt,
+                'created_at' => $decisionAt->copy()->subDays(7),
+            ])->save();
         }
     }
 }
