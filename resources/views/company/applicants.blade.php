@@ -28,7 +28,7 @@
                     @foreach ($applications as $application)
                         @php
                             $student = $application->student;
-                            // Solo nombre e inicial del apellido: sin correo, RUT, teléfono ni notas.
+                            // Solo nombre e inicial del apellido
                             $displayName = trim(($student?->user?->name ?? 'Estudiante').' '.mb_substr($student?->user?->last_name ?? '', 0, 1).'.');
                             $score = (float) $application->matching_score;
                         @endphp

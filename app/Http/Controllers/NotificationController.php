@@ -6,7 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Campana de notificaciones (RF-10).
+ * Notificaciones de la campana.
  */
 class NotificationController extends Controller
 {

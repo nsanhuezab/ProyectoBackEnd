@@ -10,11 +10,14 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
+/**
+ * Mantenedor de usuarios (página /dashboard).
+ */
 class UserController extends Controller
 {
     public function index(Request $request): View|RedirectResponse
     {
-        // /dashboard es el inicio por defecto de Laravel: quien no administra va a su propia página.
+        // Quien no es administrador se redirige a su página de inicio.
         $user = $request->user();
         if (! $user?->hasAnyRole(['Administrador', 'Super Administrador'])) {
             return redirect()->route(match (true) {

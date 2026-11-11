@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * RF-10: notificaciones de la campana (tabla estándar de Laravel).
+     * Notificaciones de la campana.
      */
     public function up(): void
     {

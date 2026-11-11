@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Oferta de práctica publicada por una empresa.
+ */
 class Offer extends Model
 {
     use HasFactory, RecordsActivity;

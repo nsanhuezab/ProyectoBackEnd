@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Notification;
 use Throwable;
 
 /**
- * Envía avisos sin interrumpir la acción del usuario si el correo falla.
+ * Envía las notificaciones de la plataforma.
  */
 class Notifier
 {
@@ -31,10 +31,10 @@ class Notifier
 
         $notification = new PlatformNotification($title, $message, $url);
 
-        // 1) Siempre queda el aviso en la campana.
+        // Aviso en la campana
         Notification::sendNow($recipients, $notification, ['database']);
 
-        // 2) Copia por correo; si el correo falla, la acción del usuario sigue funcionando.
+        // Copia por correo. Si falla, la acción del usuario no se interrumpe.
         if (config('practices.mail_notifications')) {
             try {
                 Notification::sendNow($recipients, $notification, ['mail']);

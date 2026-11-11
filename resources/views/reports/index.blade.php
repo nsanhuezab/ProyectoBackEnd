@@ -56,7 +56,7 @@
                                     <span class="font-semibold text-slate-700">{{ $row['nombre'] }}</span>
                                     <span class="text-slate-500"><b class="text-slate-800">{{ $row['activas'] }}</b> / {{ $row['total'] }}</span>
                                 </div>
-                                {{-- Barra gris = total; barra roja encima = prácticas activas --}}
+                                {{-- Gris: total. Rojo: activas. --}}
                                 <div class="mt-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
                                     <div class="h-full bg-slate-300 relative" style="width: {{ round($row['total'] / $max * 100) }}%">
                                         <div class="absolute inset-y-0 left-0 bg-red-700" style="width: {{ $row['total'] ? round($row['activas'] / $row['total'] * 100) : 0 }}%"></div>

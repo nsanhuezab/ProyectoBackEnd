@@ -1,4 +1,4 @@
-{{-- Contenedor blanco de la tabla: ícono, título, total y buscador conectado a DataTables. --}}
+{{-- Tarjeta de tabla con título, total y buscador. --}}
 @props(['title', 'total', 'searchId', 'searchPlaceholder' => 'Buscar...'])
 
 <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">

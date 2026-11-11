@@ -12,8 +12,7 @@ use Illuminate\Database\Seeder;
 class PracticeSeeder extends Seeder
 {
     /**
-     * - Juan: práctica "En Curso" en Tech Solutions (con bitácora).
-     * - María: práctica "Finalizada" en el Banco (evaluada, contratada y con evaluación de la empresa).
+     * Juan con práctica En Curso y María con práctica Finalizada.
      */
     public function run(): void
     {
@@ -51,7 +50,6 @@ class PracticeSeeder extends Seeder
                 ],
             );
 
-            // La postulación se envía antes de que la coordinación la resuelva.
             $decisionAt = $data['fecha_inicio']->copy()->subDays(5);
             $application->forceFill([
                 'status' => $practice->estado,

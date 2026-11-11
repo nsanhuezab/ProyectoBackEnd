@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Carrera con los porcentajes para ponderar la nota final de la práctica.
+ */
 class Career extends Model
 {
     use HasFactory, RecordsActivity;

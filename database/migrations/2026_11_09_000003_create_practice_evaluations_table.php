@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Rúbricas de evaluación del supervisor y del coordinador (enunciado, punto 4).
+     * Rúbricas del supervisor y del coordinador.
      */
     public function up(): void
     {

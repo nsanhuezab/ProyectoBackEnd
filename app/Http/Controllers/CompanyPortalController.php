@@ -9,8 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
 /**
- * Área de la empresa: postulantes con perfil simplificado (sin datos sensibles)
- * y prácticas en curso para completar la evaluación del supervisor.
+ * Área de la empresa: sus postulantes y sus practicantes.
  */
 class CompanyPortalController extends Controller
 {

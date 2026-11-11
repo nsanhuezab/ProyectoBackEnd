@@ -15,8 +15,7 @@
 
     <div class="bg-white p-6 rounded-lg shadow-sm w-full max-w-md text-center border border-gray-200">
 
-        {{-- Volver: a la página anterior si era el inicio o el registro; si no, al inicio.
-             (Si se llegó aquí porque una página pedía sesión, "atrás" volvería a mandar al login.) --}}
+        {{-- Volver al inicio o al registro --}}
         @php
             $previousUrl = url()->previous();
             $backUrl = in_array($previousUrl, [url('/'), route('register')], true) ? $previousUrl : url('/');

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Bitácora quincenal del estudiante (enunciado, punto 3).
+     * Bitácora quincenal del estudiante.
      */
     public function up(): void
     {

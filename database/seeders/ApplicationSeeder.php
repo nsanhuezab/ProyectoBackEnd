@@ -15,7 +15,7 @@ class ApplicationSeeder extends Seeder
     public function run(): void
     {
         $student = Student::where('id_student', 20261001)->firstOrFail();
-        // El PDF lo genera DemoCvSeeder, que se ejecuta después de este seeder.
+        // El PDF lo genera DemoCvSeeder
         $cvPath = 'cvs/demo/cv-juan-perez.pdf';
 
         foreach (Offer::orderBy('id')->get() as $index => $offer) {
@@ -30,7 +30,7 @@ class ApplicationSeeder extends Seeder
             );
         }
 
-        // Segunda estudiante: postula al Analista de Datos (su práctica ya terminó, ver PracticeSeeder).
+        // María postula a Analista de Datos
         $maria = Student::where('id_student', 20261002)->first();
         $dataOffer = Offer::where('titulo', 'Analista de Datos Jr')->first();
         if ($maria && $dataOffer) {

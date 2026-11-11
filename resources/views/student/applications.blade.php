@@ -67,7 +67,7 @@
                                         </a>
                                     @endif
 
-                                    {{-- Retirar (solo mientras está pendiente) --}}
+                                    {{-- Retirar --}}
                                     @if ($application->status === 'Postulado')
                                         <form id="withdraw-application-{{ $application->id }}" action="{{ route('student.applications.destroy', $application) }}" method="POST">
                                             @csrf

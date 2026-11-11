@@ -1,4 +1,4 @@
-{{-- Encabezado de cada módulo: ruta, título, descripción y botones de acción. --}}
+{{-- Encabezado de cada módulo. --}}
 @props(['title', 'description' => null, 'section' => 'Panel de administración'])
 
 <div class="space-y-4">

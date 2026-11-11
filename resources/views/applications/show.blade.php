@@ -72,7 +72,7 @@
                 </div>
             </div>
 
-            {{-- Conversación (RF-03) --}}
+            {{-- Mensajes --}}
             <div class="lg:col-span-2 rounded-xl bg-white shadow-sm ring-1 ring-gray-200 flex flex-col">
                 <div class="border-b border-gray-100 px-5 py-4">
                     <h2 class="text-[15px] font-bold text-slate-800">Mensajes de la postulación</h2>

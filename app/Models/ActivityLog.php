@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Registro del historial de cambios (RF-11). Solo se crea; no se edita ni se elimina.
+ * Historial de cambios. Los registros solo se crean, nunca se editan.
  */
 class ActivityLog extends Model
 {

@@ -6,7 +6,7 @@ use App\Models\ActivityLog;
 use Illuminate\Contracts\View\View;
 
 /**
- * Historial de cambios del sistema (RF-11). Solo lectura.
+ * Historial de cambios (solo lectura).
  */
 class ActivityLogController extends Controller
 {

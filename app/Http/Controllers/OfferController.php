@@ -16,15 +16,16 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+/**
+ * Mantenedor de ofertas de práctica.
+ */
 class OfferController extends Controller
 {
     use HasDataTable;
 
     /**
-     * Mantenedor de ofertas. La misma vista sirve a tres roles:
-     * - Administrador: ve y gestiona todas, y puede aprobarlas.
-     * - Coordinador: ve las de su carrera y solo puede aprobarlas o rechazarlas.
-     * - Empresa: ve y gestiona solo las suyas.
+     * Lista de ofertas según el rol: el administrador ve todas, el coordinador
+     * las de su carrera y la empresa solo las suyas.
      */
     public function index(Request $request): View
     {
@@ -131,7 +132,7 @@ class OfferController extends Controller
     }
 
     /**
-     * Aprueba o rechaza una oferta (Administrador o Coordinador de una de sus carreras).
+     * Aprueba o rechaza una oferta.
      */
     public function approve(Request $request, Offer $offer): RedirectResponse
     {
@@ -164,7 +165,7 @@ class OfferController extends Controller
     }
 
     /**
-     * Avisa a los coordinadores de las carreras de la oferta que hay una oferta por revisar.
+     * Avisa a los coordinadores que hay una oferta por revisar.
      */
     private function notifyPendingReview(Offer $offer, string $title): void
     {
@@ -177,7 +178,7 @@ class OfferController extends Controller
     }
 
     /**
-     * Datos en JSON para la vista "Explorar ofertas" del estudiante (solo ofertas aprobadas).
+     * Ofertas aprobadas en JSON para "Explorar ofertas".
      */
     public function studentData(Request $request): JsonResponse
     {

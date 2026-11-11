@@ -1,6 +1,6 @@
 {{--
-    Campos compartidos por los modales "Nueva carrera" y "Editar carrera".
-    $prefix: 'create' o 'edit' (se usa para los id y para recuperar old() tras un error de validación).
+    Campos de los modales Nueva carrera y Editar carrera.
+    $prefix: 'create' o 'edit'.
 --}}
 @php
     $isThisForm = old('_modal') === $prefix;

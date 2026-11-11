@@ -1,4 +1,4 @@
-{{-- Errores de validación, solo dentro del modal que envió el formulario. --}}
+{{-- Errores de validación del modal. --}}
 @props(['modal'])
 
 @if (old('_modal') === $modal && $errors->any())

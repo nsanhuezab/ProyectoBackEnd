@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // RF-05 / RF-06: año que cursa, promedio y validación del perfil por el coordinador.
+        // Año, promedio y validación del perfil
         Schema::table('students', function (Blueprint $table) {
             $table->unsignedTinyInteger('year_level')->nullable()->after('nivel_avance');
             $table->decimal('gpa', 2, 1)->nullable()->after('year_level');
@@ -16,12 +16,12 @@ return new class extends Migration
             $table->foreignId('validated_by')->nullable()->after('validated_at')->constrained('users')->nullOnDelete();
         });
 
-        // RF-07: promedio mínimo exigido por la oferta (opcional).
+        // Promedio mínimo de la oferta
         Schema::table('offers', function (Blueprint $table) {
             $table->decimal('min_gpa', 2, 1)->nullable()->after('nivel_requerido');
         });
 
-        // Punto 4 y 5: nota final ponderada y si el estudiante fue contratado (empleabilidad).
+        // Nota final y si quedó contratado
         Schema::table('practices', function (Blueprint $table) {
             $table->decimal('final_grade', 2, 1)->nullable()->after('estado');
             $table->boolean('hired')->nullable()->after('final_grade');

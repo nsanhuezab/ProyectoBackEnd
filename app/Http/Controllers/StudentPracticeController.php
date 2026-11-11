@@ -12,7 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * "Mi práctica": el estudiante sigue su práctica, registra la bitácora quincenal y evalúa a la empresa.
+ * "Mi práctica" del estudiante: avance, bitácora quincenal y evaluación de la empresa.
  */
 class StudentPracticeController extends Controller
 {
@@ -115,7 +115,7 @@ class StudentPracticeController extends Controller
     }
 
     /**
-     * El estudiante evalúa a la empresa (indicador de calidad del centro de práctica).
+     * Guarda la evaluación que el estudiante hace de la empresa.
      */
     public function storeReview(Request $request, Practice $practice): RedirectResponse
     {

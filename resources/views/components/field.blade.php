@@ -1,4 +1,4 @@
-{{-- Etiqueta + campo. El campo va en el slot. --}}
+{{-- Etiqueta y campo de formulario. --}}
 @props(['label', 'for' => null, 'required' => false, 'hint' => null])
 
 <div {{ $attributes }}>

@@ -23,10 +23,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-/*
- | En modo demo (solo local) UseLocalDemoUser reemplaza al login: usa la sesión real si existe
- | o entra como el Administrador. En ambos casos se sigue exigiendo el rol de cada ruta.
- */
+// En modo demo (solo local) no se pide login, pero sí el rol de cada ruta.
 $isDemo = app()->environment('local') && config('app.demo_mode');
 $authenticated = $isDemo ? [UseLocalDemoUser::class] : ['auth', 'verified'];
 
@@ -62,12 +59,7 @@ Route::middleware('auth')->group(function () {
 $staffMiddleware = [...$authenticated, 'role:Administrador|Super Administrador|Coordinador'];
 $offersMiddleware = [...$authenticated, 'role:Administrador|Super Administrador|Coordinador|Empresa'];
 $companyMiddleware = [...$authenticated, 'role:Empresa|Administrador|Super Administrador'];
-// Rutas compartidas por varios roles: cada controlador revisa quién puede ver qué.
 $anyUserMiddleware = $authenticated;
-
-/*
- | Mantenedores (sin prefijo /admin). Cada módulo tiene su controlador y su vista.
- */
 
 // Solo Administrador y Super Administrador
 Route::middleware($administratorMiddleware)->group(function () {
@@ -79,7 +71,6 @@ Route::middleware($administratorMiddleware)->group(function () {
     Route::resource('students', StudentController::class)->only(['store', 'update', 'destroy']);
     Route::resource('companies', CompanyController::class)->only(['index', 'store', 'update', 'destroy']);
 
-    // RF-11: historial de cambios
     Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
 });
 
@@ -98,7 +89,7 @@ Route::middleware($staffMiddleware)->group(function () {
 
     Route::post('offers/{offer}/approve', [OfferController::class, 'approve'])->name('offers.approve');
 
-    // Panel de indicadores (enunciado, punto 5)
+    // Indicadores
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
     Route::get('reports/excel', [ReportController::class, 'excel'])->name('reports.excel');
@@ -136,7 +127,7 @@ Route::middleware(['auth', 'role:Estudiante'])
         Route::post('practices/{practice}/review', [StudentPracticeController::class, 'storeReview'])->name('practice.review.store');
     });
 
-// Compartidas: cada controlador revisa si el usuario participa en el registro
+// Compartidas: el controlador revisa si el usuario participa en el registro
 Route::middleware($anyUserMiddleware)->group(function () {
     Route::get('applications/{application}', [ApplicationController::class, 'show'])->name('applications.show');
     Route::post('applications/{application}/messages', [ApplicationController::class, 'storeMessage'])->name('applications.messages.store');

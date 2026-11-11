@@ -39,7 +39,7 @@ class StudentRequest extends FormRequest
     }
 
     /**
-     * Las habilidades llegan del formulario como texto separado por comas.
+     * Convierte las habilidades (separadas por coma) en lista.
      */
     protected function prepareForValidation(): void
     {

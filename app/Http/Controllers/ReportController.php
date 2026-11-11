@@ -13,8 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Panel de indicadores (enunciado, punto 5) con exportación a PDF y Excel.
- * El coordinador ve solo los datos de su carrera.
+ * Panel de indicadores con exportación a PDF y Excel. El coordinador ve solo su carrera.
  */
 class ReportController extends Controller
 {
@@ -27,7 +26,6 @@ class ReportController extends Controller
     {
         $data = $this->buildReport($request->user()) + ['generatedAt' => now()];
 
-        // Requiere: composer require barryvdh/laravel-dompdf
         if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             return \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', $data)
                 ->setPaper('a4')
@@ -42,7 +40,6 @@ class ReportController extends Controller
         $sheets = $this->sheets($this->buildReport($request->user()));
         $fileName = 'indicadores-practicas-'.now()->format('Y-m-d');
 
-        // Requiere: composer require phpoffice/phpspreadsheet
         if (class_exists(\PhpOffice\PhpSpreadsheet\Spreadsheet::class)) {
             return response()->streamDownload(function () use ($sheets): void {
                 $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -65,7 +62,7 @@ class ReportController extends Controller
             ]);
         }
 
-        // Sin la librería: CSV que Excel abre directamente (separado por ";" y con tildes).
+        // Respaldo si no está PhpSpreadsheet: CSV separado por ";"
         return response()->streamDownload(function () use ($sheets): void {
             $output = fopen('php://output', 'w');
             fwrite($output, "\xEF\xBB\xBF");
@@ -81,7 +78,7 @@ class ReportController extends Controller
     }
 
     /**
-     * Calcula todos los indicadores del panel.
+     * Calcula los indicadores del panel.
      *
      * @return array<string, mixed>
      */

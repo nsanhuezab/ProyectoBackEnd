@@ -17,12 +17,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Prácticas: mantenedor, cambio de estado y acta.
+ */
 class PracticeController extends Controller
 {
     use AuthorizesPractices;
 
     /**
-     * Prácticas para Administrador (todas) y Coordinador (solo las de su carrera).
+     * Lista de prácticas. El coordinador solo ve las de su carrera.
      */
     public function index(Request $request): View
     {
@@ -52,7 +55,7 @@ class PracticeController extends Controller
             $counts[$state] = $practices->where('estado', $state)->count();
         }
 
-        // Postulaciones pendientes que se pueden convertir en práctica desde "Nueva práctica".
+        // Postulaciones pendientes para el modal "Nueva práctica"
         $pendingApplications = Application::query()
             ->with(['student.user:id,name,last_name', 'offer:id,titulo,empresa'])
             ->where('status', 'Postulado')
@@ -66,7 +69,7 @@ class PracticeController extends Controller
     }
 
     /**
-     * Detalle de una práctica: avance, bitácora, rúbricas, nota final y acta.
+     * Detalle de la práctica.
      */
     public function show(Request $request, Practice $practice): View
     {
@@ -140,7 +143,7 @@ class PracticeController extends Controller
     }
 
     /**
-     * Se editan las fechas y si el estudiante fue contratado; el estado avanza con transition().
+     * Actualiza las fechas y si el estudiante fue contratado.
      */
     public function update(PracticeRequest $request, Practice $practice): RedirectResponse
     {
@@ -171,8 +174,7 @@ class PracticeController extends Controller
     }
 
     /**
-     * Avanza la práctica al siguiente estado del flujo.
-     * Para pasar a "Evaluado" deben existir las dos rúbricas (supervisor y coordinador).
+     * Avanza la práctica al siguiente estado. Para pasar a "Evaluado" se necesitan las dos rúbricas.
      */
     public function transition(Request $request, Practice $practice): RedirectResponse
     {
@@ -207,7 +209,7 @@ class PracticeController extends Controller
     }
 
     /**
-     * Acta de cierre en PDF (enunciado, punto 4). Disponible con la nota final calculada.
+     * Descarga el acta de cierre en PDF (requiere la nota final).
      */
     public function acta(Request $request, Practice $practice): Response
     {
@@ -225,12 +227,11 @@ class PracticeController extends Controller
         ];
         $fileName = 'acta-cierre-practica-'.$practice->id.'.pdf';
 
-        // Requiere: composer require barryvdh/laravel-dompdf
         if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             return \Barryvdh\DomPDF\Facade\Pdf::loadView('practices.acta', $data)->download($fileName);
         }
 
-        // Sin la librería se muestra la versión imprimible (Ctrl + P → Guardar como PDF).
+        // Respaldo si no está DomPDF: versión para imprimir
         return response()->view('practices.acta', $data + ['printable' => true]);
     }
 

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * RF-11: historial de cambios. Solo se insertan filas; nunca se editan.
+     * Historial de cambios.
      */
     public function up(): void
     {

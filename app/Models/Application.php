@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * Postulación de un estudiante a una oferta.
+ */
 class Application extends Model
 {
     use HasFactory, RecordsActivity;

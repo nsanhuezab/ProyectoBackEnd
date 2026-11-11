@@ -289,7 +289,7 @@
     </style>
 
     <script>
-        // --- Tabla con DataTables (búsqueda, orden y paginación en el navegador) ---
+        // Tabla de carreras
         const careersTable = $('#careersTable').DataTable({
             dom: 'rtip',
             pageLength: 10,
@@ -305,7 +305,7 @@
             careersTable.search(event.target.value).draw();
         });
 
-        // --- Abrir y cerrar modales ---
+        // Modales
         function openCareerModal(id) {
             const modal = document.getElementById(id);
             modal.classList.remove('hidden');
@@ -365,7 +365,7 @@
             openCareerModal('showCareerModal');
         }
 
-        // --- Supervisor + coordinador siempre suman 100 ---
+        // Supervisor + coordinador = 100
         document.querySelectorAll('[data-weight]').forEach((input) => {
             input.addEventListener('input', () => {
                 const other = input.dataset.weight === 'supervisor' ? 'coordinador' : 'supervisor';
@@ -376,7 +376,7 @@
             });
         });
 
-        // --- Confirmación de eliminación con SweetAlert2 ---
+        // Confirmar eliminación
         function confirmDeleteCareer(id, name) {
             Swal.fire({
                 title: '¿Eliminar carrera?',
@@ -394,7 +394,7 @@
             });
         }
 
-        // --- Si la validación falló, se reabre el modal que se estaba usando ---
+        // Reabrir el modal si hubo errores
         @if ($errors->any() && old('_modal') === 'create')
             openCareerModal('createCareerModal');
         @elseif ($errors->any() && old('_modal') === 'edit')

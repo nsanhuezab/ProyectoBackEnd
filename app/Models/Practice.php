@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * Práctica creada al asignar una postulación.
+ */
 class Practice extends Model
 {
     use RecordsActivity;
@@ -57,14 +60,17 @@ class Practice extends Model
         return $this->hasOne(CompanyReview::class);
     }
 
+    /**
+     * Rúbrica de un evaluador: 'supervisor' o 'coordinador'.
+     */
     public function evaluationBy(string $role): ?PracticeEvaluation
     {
         return $this->evaluations->firstWhere('evaluator_role', $role);
     }
 
     /**
-     * Nota final = nota supervisor × % supervisor + nota coordinador × % coordinador (porcentajes de la carrera).
-     * Devuelve null mientras falte alguna de las dos evaluaciones.
+     * Nota final ponderada con los porcentajes de la carrera.
+     * Es null mientras falte la nota del supervisor o la del coordinador.
      */
     public function calculateFinalGrade(): ?float
     {
@@ -83,6 +89,9 @@ class Practice extends Model
         return round($grade, 1);
     }
 
+    /**
+     * true si aprobó, false si reprobó y null si aún no tiene nota.
+     */
     public function isApproved(): ?bool
     {
         return $this->final_grade === null ? null : (float) $this->final_grade >= config('practices.passing_grade');

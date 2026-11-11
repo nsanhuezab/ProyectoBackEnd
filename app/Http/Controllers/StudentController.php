@@ -12,9 +12,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Perfiles de estudiante (RF-05 / RF-06).
- * - El Administrador crea y edita los perfiles.
- * - El Coordinador ve los estudiantes de su carrera y valida sus datos.
+ * Perfiles de estudiante. El administrador los crea y edita; el coordinador
+ * ve los de su carrera y los valida.
  */
 class StudentController extends Controller
 {
@@ -43,7 +42,7 @@ class StudentController extends Controller
 
         $careers = Career::query()->orderBy('nombre')->get(['id', 'codigo', 'nombre']);
 
-        // Cuentas con rol Estudiante; las que ya tienen perfil se marcan en la vista.
+        // Cuentas con rol Estudiante para el select del formulario
         $studentUsers = $can['manage'] ? User::role('Estudiante')->orderBy('name')->get(['id', 'name', 'last_name', 'email']) : collect();
         $usedUserIds = $students->pluck('user_id')->filter()->all();
 
@@ -61,7 +60,7 @@ class StudentController extends Controller
     }
 
     /**
-     * Al editar el perfil, la validación del coordinador vuelve a quedar pendiente.
+     * Actualiza el perfil. La validación vuelve a quedar pendiente.
      */
     public function update(StudentRequest $request, Student $student): RedirectResponse
     {
@@ -93,7 +92,7 @@ class StudentController extends Controller
     }
 
     /**
-     * RF-06: el coordinador confirma que los datos del estudiante son correctos.
+     * El coordinador confirma que los datos del estudiante son correctos.
      */
     public function validateProfile(Request $request, Student $student): RedirectResponse
     {

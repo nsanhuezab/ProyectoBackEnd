@@ -1,4 +1,4 @@
-{{-- Tarjeta de resumen con un número. color: slate | emerald | amber | red | blue --}}
+{{-- Tarjeta con un total. color: slate, emerald, amber, red, blue --}}
 @props(['label', 'value', 'color' => 'slate'])
 
 @php

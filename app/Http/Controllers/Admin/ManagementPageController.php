@@ -9,8 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
 
 /**
- * Páginas del área de estudiante. Los mantenedores de administración
- * tienen ahora cada uno su propio controlador y su propia vista.
+ * Páginas del área de estudiante.
  */
 class ManagementPageController extends Controller
 {

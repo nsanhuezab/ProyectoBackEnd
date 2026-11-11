@@ -19,10 +19,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Postulaciones: listado, asignación, rechazo, mensajes y descarga del CV.
+ */
 class ApplicationController extends Controller
 {
     /**
-     * Postulaciones para Administrador (todas) y Coordinador (solo las de su carrera).
+     * Lista de postulaciones. El coordinador solo ve las de su carrera.
      */
     public function index(Request $request): View
     {
@@ -181,7 +184,7 @@ class ApplicationController extends Controller
     }
 
     /**
-     * Eliminación desde administración (solo Administrador).
+     * Elimina una postulación (solo administrador).
      */
     public function destroy(Request $request, Application $application): RedirectResponse
     {
@@ -221,8 +224,7 @@ class ApplicationController extends Controller
     }
 
     /**
-     * Detalle de una postulación con su conversación (RF-03).
-     * La ven el estudiante dueño, el coordinador de su carrera y el administrador.
+     * Detalle de la postulación con sus mensajes.
      */
     public function show(Request $request, Application $application): View
     {

@@ -8,10 +8,13 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * Mantenedor de carreras.
+ */
 class CareerController extends Controller
 {
     /**
-     * Muestra el mantenedor de carreras con sus totales.
+     * Lista de carreras con sus totales.
      */
     public function index(): View
     {
@@ -30,7 +33,7 @@ class CareerController extends Controller
     }
 
     /**
-     * Lista simple de carreras para selects de otros módulos.
+     * Carreras para los select de otros formularios.
      */
     public function options(): JsonResponse
     {
@@ -58,7 +61,7 @@ class CareerController extends Controller
     }
 
     /**
-     * Elimina la carrera solo si no tiene estudiantes, ofertas ni usuarios asociados.
+     * Elimina la carrera si no tiene estudiantes, ofertas ni usuarios asociados.
      */
     public function destroy(Career $career): RedirectResponse
     {

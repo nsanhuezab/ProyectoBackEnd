@@ -1,6 +1,5 @@
 {{--
-    Modal con encabezado oscuro. Se abre con openModal('id') y se cierra con closeModal('id').
-    Si el formulario de adentro falla en la validación, el layout lo vuelve a abrir solo.
+    Modal de formulario. Se abre con openModal('id') y se cierra con closeModal('id').
 --}}
 @props(['id', 'title', 'subtitle' => null, 'width' => 'max-w-xl'])
 

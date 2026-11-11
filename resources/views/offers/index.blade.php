@@ -283,7 +283,7 @@
     <script>
         initDataTable('#offersTable', '#offerSearch', { order: [] });
 
-        // Aprobar / rechazar con SweetAlert2: se rellena el campo "estado" y se envía el formulario.
+        // Aprobar o rechazar la oferta
         function reviewOffer(formId, title) {
             Swal.fire({
                 title: 'Revisar oferta',

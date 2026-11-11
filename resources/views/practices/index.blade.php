@@ -75,7 +75,7 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4" data-order="{{ $stepIndex }}" data-search="{{ $practice->estado }}">
-                                {{-- Línea de avance: un punto por estado, coloreados hasta el estado actual --}}
+                                {{-- Avance por estado --}}
                                 <div class="w-56">
                                     <div class="flex items-center">
                                         @foreach ($states as $index => $state)
@@ -129,7 +129,7 @@
         </x-table-card>
     </div>
 
-    {{-- Modal: nueva práctica a partir de una postulación pendiente --}}
+    {{-- Modal: nueva práctica --}}
     <x-form-modal id="createPracticeModal" title="Nueva práctica" subtitle="Elige una postulación pendiente; quedará asignada.">
         <form action="{{ route('practices.store') }}" method="POST" class="space-y-5 p-6">
             @csrf

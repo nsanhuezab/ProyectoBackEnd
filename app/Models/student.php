@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Perfil académico de un usuario con rol Estudiante.
+ */
 class Student extends Model
 {
     use HasFactory, RecordsActivity;

@@ -4,8 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-// NOTA: tabla provisoria para que el datatable de Ofertas funcione.
-// Si otro compañero define la tabla real, reemplazar esta migración por la suya.
 return new class extends Migration
 {
     public function up(): void

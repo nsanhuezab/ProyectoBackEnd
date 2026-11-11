@@ -1,4 +1,4 @@
-{{-- Botones Cancelar / Guardar al final de un formulario en modal. --}}
+{{-- Botones Cancelar y Guardar del modal. --}}
 @props(['modal', 'label' => 'Guardar'])
 
 <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">

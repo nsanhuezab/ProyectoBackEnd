@@ -180,7 +180,7 @@
 
 @push('scripts')
     <style>
-        /* Estrellas: al pasar el mouse o elegir una, se pintan esa y las anteriores */
+        /* Estrellas de la evaluación */
         .star-rating label:hover,
         .star-rating label:hover ~ label,
         .star-rating input:checked ~ label { color: #f59e0b; }

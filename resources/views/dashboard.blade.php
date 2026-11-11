@@ -134,7 +134,7 @@
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-4 text-center">
                                         <div class="flex items-center justify-center gap-1.5">
-                                            {{-- Botón Editar (SVG de Lápiz Tailwind) --}}
+                                            {{-- Editar --}}
                                             <button type="button" title="Editar usuario"
                                                 data-user="{{ json_encode([
                                                     'id' => $user->id,
@@ -155,7 +155,7 @@
                                                 </svg>
                                             </button>
 
-                                            {{-- Botón Eliminar (SVG de Papelera Tailwind) --}}
+                                            {{-- Eliminar --}}
                                             @unless (auth()->user()?->is($user))
                                                 <form id="delete-user-{{ $user->id }}"
                                                     action="{{ route('admin.users.destroy', $user) }}" method="POST"
@@ -383,7 +383,7 @@
 
 @push('scripts')
     <script>
-        // DataTables en el CRUD de usuarios (búsqueda, orden y paginación).
+        // Tabla de usuarios
         if (document.getElementById('usersTable')) {
             initDataTable('#usersTable', '#userSearch', { order: [] });
         }

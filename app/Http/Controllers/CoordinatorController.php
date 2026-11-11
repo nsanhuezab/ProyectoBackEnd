@@ -9,12 +9,15 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 
+/**
+ * Mantenedor de coordinadores (usuarios con rol Coordinador).
+ */
 class CoordinatorController extends Controller
 {
     private const ROLE = 'Coordinador';
 
     /**
-     * Mantenedor de coordinadores: usuarios con rol Coordinador y su carrera.
+     * Lista de coordinadores con su carrera.
      */
     public function index(): View
     {

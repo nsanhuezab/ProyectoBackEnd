@@ -1,4 +1,4 @@
-{{-- CV ficticio que usa DemoCvSeeder para las postulaciones de ejemplo (se genera con DomPDF). --}}
+{{-- CV de ejemplo que genera DemoCvSeeder. --}}
 <!DOCTYPE html>
 <html lang="es">
 <head>

@@ -43,8 +43,7 @@ trait AuthorizesPractices
     }
 
     /**
-     * El supervisor evalúa como "supervisor"; el coordinador como "coordinador".
-     * El administrador puede registrar ambas (por ejemplo, si el supervisor la envía en papel).
+     * Rol con el que evalúa el usuario. El administrador puede registrar ambas rúbricas.
      */
     protected function canEvaluate(?User $user, Practice $practice, string $role): bool
     {

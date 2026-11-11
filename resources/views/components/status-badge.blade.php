@@ -1,4 +1,4 @@
-{{-- Etiqueta de estado con color según el valor (ofertas, postulaciones y prácticas). --}}
+{{-- Etiqueta de estado con color. --}}
 @props(['status'])
 
 @php

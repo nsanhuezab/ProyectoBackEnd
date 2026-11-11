@@ -14,7 +14,7 @@
 
     <div class="bg-white p-6 rounded-lg shadow-sm w-full max-w-md mx-auto text-center border border-gray-200">
 
-        {{-- Volver a la página anterior (o al inicio si se llegó directo o tras un error del formulario) --}}
+        {{-- Volver a la página anterior --}}
         @php
             $backUrl = url()->previous() !== url()->current() ? url()->previous() : url('/');
         @endphp

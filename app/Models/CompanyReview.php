@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Evaluación que el estudiante hace de la empresa al terminar su práctica (1 a 5 estrellas).
+ * Evaluación de 1 a 5 estrellas que el estudiante hace de la empresa al terminar.
  */
 class CompanyReview extends Model
 {

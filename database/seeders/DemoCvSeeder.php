@@ -8,8 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Genera un CV ficticio en PDF para cada estudiante de ejemplo y lo asocia a sus postulaciones.
- * Se puede ejecutar solo: php artisan db:seed --class=DemoCvSeeder
+ * CV de ejemplo en PDF para los estudiantes de prueba.
  */
 class DemoCvSeeder extends Seeder
 {
@@ -34,7 +33,7 @@ class DemoCvSeeder extends Seeder
             $path = 'cvs/demo/'.$profile['archivo'];
             Storage::disk('local')->put($path, $this->render($cv));
 
-            // Solo reemplaza los CV de ejemplo; los que suba el estudiante no se tocan.
+            // Solo reemplaza los CV de ejemplo
             Application::where('student_id', $student->id)
                 ->where(fn ($query) => $query->whereNull('cv_path')->orWhere('cv_path', 'like', 'cvs/demo/%'))
                 ->update(['cv_path' => $path]);

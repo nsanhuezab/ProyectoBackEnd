@@ -7,7 +7,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * RF-10: aviso de la plataforma. Se guarda para la campana y, si está activado, se envía por correo.
+ * Aviso de la plataforma: se guarda para la campana y, si está activado, se envía por correo.
  */
 class PlatformNotification extends Notification
 {

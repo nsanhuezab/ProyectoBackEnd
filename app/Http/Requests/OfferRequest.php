@@ -37,8 +37,7 @@ class OfferRequest extends FormRequest
     }
 
     /**
-     * - Las habilidades llegan como texto separado por comas.
-     * - Si quien publica es una Empresa, la oferta siempre queda a nombre de su propia empresa.
+     * Convierte las habilidades en lista y, si publica una empresa, usa su propia empresa.
      */
     protected function prepareForValidation(): void
     {

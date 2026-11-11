@@ -8,10 +8,13 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
+/**
+ * Mantenedor de empresas.
+ */
 class CompanyController extends Controller
 {
     /**
-     * Mantenedor de empresas en convenio, con su supervisor de práctica y sus ofertas.
+     * Lista de empresas con sus totales.
      */
     public function index(): View
     {

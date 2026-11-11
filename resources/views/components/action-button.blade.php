@@ -1,4 +1,4 @@
-{{-- Botón de ícono para la columna "Acciones". type: view | edit | delete | approve | reject | next | download --}}
+{{-- Botón de ícono para la columna Acciones. type: view, edit, delete, approve, reject, next, download --}}
 @props(['type', 'title'])
 
 @php

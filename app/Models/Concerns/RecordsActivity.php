@@ -7,8 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * RF-11: guarda en activity_logs quién creó, modificó o eliminó un registro y qué cambió.
- * Basta con agregar "use RecordsActivity;" al modelo.
+ * Guarda en activity_logs quién creó, modificó o eliminó un registro y qué cambió.
  */
 trait RecordsActivity
 {
@@ -35,7 +34,7 @@ trait RecordsActivity
     }
 
     /**
-     * Nombre legible del registro para el historial (cada modelo puede redefinirlo).
+     * Nombre del registro que se muestra en el historial.
      */
     public function activityLabel(): string
     {

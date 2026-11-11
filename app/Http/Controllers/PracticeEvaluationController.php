@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
- * Rúbricas de evaluación (enunciado, puntos 3 y 4).
+ * Rúbricas de evaluación del supervisor y del coordinador.
  */
 class PracticeEvaluationController extends Controller
 {
