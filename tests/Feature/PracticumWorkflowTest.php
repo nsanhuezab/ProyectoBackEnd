@@ -35,7 +35,7 @@ class PracticumWorkflowTest extends TestCase
         $applicant->assignRole($studentRole);
         $this->createStudent($applicant, $career, 10002);
 
-        $response = $this->actingAs($applicant)->post('/applications', [
+        $response = $this->actingAs($applicant)->post('/student/applications', [
             'offer_id' => $offer->id,
             'cv' => UploadedFile::fake()->create('curriculum.pdf', 100, 'application/pdf'),
             'carta_motivacion' => 'Quiero aportar al equipo de desarrollo.',
@@ -63,7 +63,7 @@ class PracticumWorkflowTest extends TestCase
         $student = $this->createStudent($studentUser, $studentCareer, 10003);
         $application = $this->createStudentApplication($student, $offer);
 
-        $response = $this->actingAs($coordinator)->post('/coordinator/applications/'.$application->id.'/assign');
+        $response = $this->actingAs($coordinator)->post('/applications/'.$application->id.'/assign');
 
         $response->assertForbidden();
         $this->assertDatabaseMissing('practices', ['application_id' => $application->id]);
@@ -83,9 +83,9 @@ class PracticumWorkflowTest extends TestCase
         $offer = $this->createOffer($company, $career, 1);
         $application = $this->createStudentApplication($student, $offer);
 
-        $response = $this->actingAs($coordinator)->post('/coordinator/applications/'.$application->id.'/assign');
+        $response = $this->actingAs($coordinator)->post('/applications/'.$application->id.'/assign');
 
-        $response->assertCreated();
+        $response->assertRedirect()->assertSessionHas('success');
         $this->assertDatabaseHas('practices', ['application_id' => $application->id, 'estado' => 'Asignado']);
         $this->assertSame('Asignado', $application->refresh()->status);
     }
@@ -102,7 +102,131 @@ class PracticumWorkflowTest extends TestCase
         $this->assertDatabaseHas('companies', ['rut' => '76123456-7']);
         $this->assertDatabaseHas('offers', ['titulo' => 'Desarrollador Backend Laravel']);
         $this->assertDatabaseHas('applications', ['status' => 'Postulado']);
-        $this->assertDatabaseHas('practices', ['estado' => 'Asignado']);
+        $this->assertDatabaseHas('practices', ['estado' => 'En Curso']);
+        $this->assertDatabaseHas('practices', ['estado' => 'Finalizada', 'hired' => true]);
+        $this->assertDatabaseCount('practice_evaluations', 2);
+        $this->assertDatabaseHas('company_reviews', ['rating' => 5]);
+        $this->assertDatabaseHas('application_messages', ['application_status' => 'Postulado']);
+        $this->assertGreaterThan(0, \App\Models\PracticeLog::count());
+    }
+
+    public function test_admin_can_open_every_management_page(): void
+    {
+        Storage::fake('local');
+        $this->withoutVite();
+        $this->seed();
+        $admin = User::where('email', 'admin@ucsc.cl')->firstOrFail();
+
+        foreach (['/careers', '/coordinators', '/students', '/companies', '/offers', '/applications', '/practices', '/reports', '/activity', '/company/applicants', '/company/practices'] as $url) {
+            $this->actingAs($admin)->get($url)->assertOk();
+        }
+    }
+
+    public function test_coordinator_can_open_their_pages_but_not_admin_ones(): void
+    {
+        Storage::fake('local');
+        $this->withoutVite();
+        $this->seed();
+        $coordinator = User::where('email', 'coordinador@ucsc.cl')->firstOrFail();
+
+        $this->actingAs($coordinator)->get('/applications')->assertOk();
+        $this->actingAs($coordinator)->get('/practices')->assertOk();
+        $this->actingAs($coordinator)->get('/offers')->assertOk();
+        $this->actingAs($coordinator)->get('/companies')->assertForbidden();
+    }
+
+    public function test_evaluado_requires_both_rubrics_and_final_grade_uses_career_weights(): void
+    {
+        Storage::fake('local');
+        $this->seed();
+        $admin = User::where('email', 'admin@ucsc.cl')->firstOrFail();
+        $practice = $this->practiceOf(20261001); // Juan, ICI: supervisor 60 % / coordinador 40 %
+        $practice->update(['estado' => 'Informe Entregado']);
+
+        $this->actingAs($admin)->post("/practices/{$practice->id}/transition", ['estado' => 'Evaluado'])
+            ->assertSessionHas('error');
+        $this->assertSame('Informe Entregado', $practice->fresh()->estado);
+
+        $this->actingAs($admin)->post("/practices/{$practice->id}/evaluations", [
+            'evaluator_role' => 'supervisor',
+            'scores' => array_fill_keys(array_keys(config('practices.competencies')), 7),
+        ])->assertSessionHas('success');
+        $this->actingAs($admin)->post("/practices/{$practice->id}/evaluations", [
+            'evaluator_role' => 'coordinador',
+            'scores' => array_fill_keys(array_keys(config('practices.competencies')), 5),
+        ])->assertSessionHas('success');
+
+        $practice->refresh();
+        $this->assertSame('Evaluado', $practice->estado);
+        $this->assertEquals(6.2, (float) $practice->final_grade); // 7 × 0,6 + 5 × 0,4
+        $this->assertSame('Evaluado', $practice->application->status);
+
+        $this->actingAs($admin)->get("/practices/{$practice->id}/acta")->assertOk();
+    }
+
+    public function test_student_registers_biweekly_log_and_cannot_touch_other_practices(): void
+    {
+        Storage::fake('local');
+        $this->seed();
+        $juan = User::where('email', 'juan@ucsc.cl')->firstOrFail();
+        $ownPractice = $this->practiceOf(20261001);
+        $otherPractice = $this->practiceOf(20261002);
+        $payload = [
+            'period_start' => now()->subDays(13)->toDateString(),
+            'period_end' => now()->toDateString(),
+            'hours' => 40,
+            'activities' => 'Desarrollé el módulo de reportes y sus pruebas.',
+        ];
+
+        $this->actingAs($juan)->post("/student/practices/{$ownPractice->id}/logs", $payload)->assertSessionHas('success');
+        $this->assertDatabaseHas('practice_logs', ['practice_id' => $ownPractice->id, 'hours' => 40]);
+
+        $this->actingAs($juan)->post("/student/practices/{$otherPractice->id}/logs", $payload)->assertForbidden();
+
+        $this->actingAs($juan)->post("/student/practices/{$ownPractice->id}/logs", [
+            ...$payload,
+            'period_start' => now()->subDays(40)->toDateString(),
+        ])->assertSessionHasErrors('period_end');
+    }
+
+    public function test_reports_export_and_company_sees_simplified_profiles(): void
+    {
+        Storage::fake('local');
+        $this->withoutVite();
+        $this->seed();
+        $admin = User::where('email', 'admin@ucsc.cl')->firstOrFail();
+        $company = User::where('email', 'empresa@gmail.com')->firstOrFail();
+
+        $this->actingAs($admin)->get('/reports')->assertOk()->assertSee('Tasa de aprobación');
+        $this->actingAs($admin)->get('/reports/excel')->assertOk();
+        $this->actingAs($admin)->get('/reports/pdf')->assertOk();
+
+        $this->actingAs($company)->get('/company/applicants')
+            ->assertOk()
+            ->assertSee('Juan P.')
+            ->assertDontSee('juan@ucsc.cl');
+    }
+
+    public function test_application_messages_are_limited_to_participants(): void
+    {
+        Storage::fake('local');
+        $this->withoutVite();
+        $this->seed();
+        $application = Application::with('student')->orderBy('id')->firstOrFail();
+        $juan = User::where('email', 'juan@ucsc.cl')->firstOrFail();
+        $maria = User::where('email', 'maria@ucsc.cl')->firstOrFail();
+
+        $this->actingAs($juan)->get("/applications/{$application->id}")->assertOk();
+        $this->actingAs($juan)->post("/applications/{$application->id}/messages", ['body' => '¿Hay cupos disponibles?'])
+            ->assertSessionHas('success');
+        $this->assertDatabaseHas('application_messages', ['body' => '¿Hay cupos disponibles?', 'user_id' => $juan->id]);
+
+        $this->actingAs($maria)->get("/applications/{$application->id}")->assertForbidden();
+    }
+
+    private function practiceOf(int $studentId): \App\Models\Practice
+    {
+        return \App\Models\Practice::whereHas('application.student', fn ($student) => $student->where('id_student', $studentId))->firstOrFail();
     }
 
     private function createCareer(string $code, float $supervisorWeight = 60, float $coordinatorWeight = 40): Career

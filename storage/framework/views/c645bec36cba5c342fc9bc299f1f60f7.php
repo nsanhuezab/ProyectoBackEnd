@@ -44,11 +44,19 @@
         <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
             <div
                 class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-6 py-4 text-sm text-gray-600">
-                <span>Usuarios registrados: <strong class="text-gray-900"><?php echo e($users->count()); ?></strong></span>
-                <?php if(isset($showInternalId) && !$showInternalId): ?>
-                    <span class="text-xs text-gray-400">El identificador interno solo está disponible para Super
-                        Administrador.</span>
-                <?php endif; ?>
+                <div>
+                    <span>Usuarios registrados: <strong class="text-gray-900"><?php echo e($users->count()); ?></strong></span>
+                    <?php if(isset($showInternalId) && !$showInternalId): ?>
+                        <span class="block text-xs text-gray-400">El identificador interno solo está disponible para Super Administrador.</span>
+                    <?php endif; ?>
+                </div>
+                <div class="relative w-full md:max-w-sm">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" id="userSearch" placeholder="Buscar por nombre, RUT, correo o rol..."
+                        class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-[13px] text-slate-800 placeholder-slate-400 focus:bg-white focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-100 transition">
+                </div>
             </div>
 
             <?php if($users->isEmpty()): ?>
@@ -57,7 +65,7 @@
                 </div>
             <?php else: ?>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100 text-sm">
+                    <table id="usersTable" class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50/50">
                             <tr>
                                 <?php if(isset($showInternalId) && $showInternalId): ?>
@@ -380,5 +388,14 @@
         });
     </script>
 <?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('scripts'); ?>
+    <script>
+        // DataTables en el CRUD de usuarios (búsqueda, orden y paginación).
+        if (document.getElementById('usersTable')) {
+            initDataTable('#usersTable', '#userSearch', { order: [] });
+        }
+    </script>
+<?php $__env->stopPush(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\nicoe\OneDrive\Escritorio\Proyecto BackEnd\ProyectoBackEnd\resources\views/dashboard.blade.php ENDPATH**/ ?>

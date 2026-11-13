@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Oferta de práctica publicada por una empresa.
+ */
 class Offer extends Model
 {
-    use HasFactory;
+    use HasFactory, RecordsActivity;
 
     protected $fillable = [
         'titulo',
@@ -23,6 +27,7 @@ class Offer extends Model
         'area',
         'perfil',
         'nivel_requerido',
+        'min_gpa',
         'modalidad',
         'duracion_semanas',
         'horario',
@@ -38,6 +43,7 @@ class Offer extends Model
             'habilidades' => 'array',
             'approved_at' => 'datetime',
             'remuneracion' => 'decimal:2',
+            'min_gpa' => 'decimal:1',
         ];
     }
 
@@ -64,5 +70,10 @@ class Offer extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function activityLabel(): string
+    {
+        return 'Oferta «'.$this->titulo.'»';
     }
 }

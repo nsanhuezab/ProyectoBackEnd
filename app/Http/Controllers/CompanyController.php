@@ -2,56 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\HasDataTable;
 use App\Http\Requests\CompanyRequest;
 use App\Models\Company;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use App\Models\User;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
+/**
+ * Mantenedor de empresas.
+ */
 class CompanyController extends Controller
 {
-    use HasDataTable;
-
-    public function index(Request $request): JsonResponse
+    /**
+     * Lista de empresas con sus totales.
+     */
+    public function index(): View
     {
-        return $this->dataTableResponse(
-            $request,
-            Company::query(),
-            searchable: ['razon_social', 'rut', 'rubro', 'contacto_nombre', 'contacto_email'],
-            sortable: [
-                'id' => 'id',
-                'razon_social' => 'razon_social',
-                'rut' => 'rut',
-                'rubro' => 'rubro',
-            ],
-            transform: fn (Company $company) => $company->only([
-                'id', 'razon_social', 'rut', 'rubro', 'direccion', 'sitio_web',
-                'contacto_nombre', 'contacto_email', 'telefono',
-            ]),
-            defaultSort: 'razon_social',
-        );
+        $companies = Company::query()
+            ->with('owner:id,name,last_name,email')
+            ->withCount('offers')
+            ->orderBy('razon_social')
+            ->get();
+
+        $counts = [
+            'total' => $companies->count(),
+            'con_ofertas' => $companies->where('offers_count', '>', 0)->count(),
+            'con_cuenta' => $companies->whereNotNull('owner_user_id')->count(),
+        ];
+
+        $companyUsers = User::role('Empresa')->orderBy('name')->get(['id', 'name', 'last_name', 'email']);
+
+        return view('companies.index', compact('companies', 'counts', 'companyUsers'));
     }
 
-    public function store(CompanyRequest $request): JsonResponse
+    public function store(CompanyRequest $request): RedirectResponse
     {
         $company = Company::create($request->validated());
 
-        return response()->json($company, 201);
+        return back()->with('success', "Empresa «{$company->razon_social}» registrada correctamente.");
     }
 
-    public function update(CompanyRequest $request, Company $company): JsonResponse
+    public function update(CompanyRequest $request, Company $company): RedirectResponse
     {
         $company->update($request->validated());
 
-        return response()->json($company->refresh());
+        return back()->with('success', "Empresa «{$company->razon_social}» actualizada correctamente.");
     }
 
-    public function destroy(Company $company): Response
+    public function destroy(Company $company): RedirectResponse
     {
-        abort_if($company->offers()->exists(), 409, 'No puedes eliminar una empresa con ofertas registradas.');
+        $offers = $company->offers()->count();
+        if ($offers > 0) {
+            return back()->with('error', "No se puede eliminar «{$company->razon_social}» porque tiene {$offers} oferta(s) registradas.");
+        }
+
         $company->delete();
 
-        return response()->noContent();
+        return back()->with('success', "Empresa «{$company->razon_social}» eliminada correctamente.");
     }
 }
