@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\CatalogController;
 use App\Http\Controllers\Admin\ManagementPageController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\ApiDocsController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\CareerController;
 use App\Http\Controllers\CompanyController;
@@ -22,6 +24,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Documentación pública de la API REST
+Route::get('/docs/api', [ApiDocsController::class, 'index'])->name('docs.api');
+Route::get('/docs/api/postman/{file}', [ApiDocsController::class, 'postman'])->whereIn('file', ['collection', 'environment'])->name('docs.api.postman');
 
 // En modo demo (solo local) no se pide login, pero sí el rol de cada ruta.
 $isDemo = app()->environment('local') && config('app.demo_mode');
@@ -72,6 +78,16 @@ Route::middleware($administratorMiddleware)->group(function () {
     Route::resource('companies', CompanyController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
+});
+
+// Mantenedores genéricos (config/catalogs.php): bitácoras, evaluaciones, reseñas, mensajes y roles
+Route::middleware($administratorMiddleware)->group(function () {
+    foreach (array_keys(config('catalogs', [])) as $key) {
+        Route::get("mantenedores/{$key}", [CatalogController::class, 'index'])->defaults('catalog', $key)->name("catalogs.{$key}.index");
+        Route::post("mantenedores/{$key}", [CatalogController::class, 'store'])->defaults('catalog', $key)->name("catalogs.{$key}.store");
+        Route::put("mantenedores/{$key}/{id}", [CatalogController::class, 'update'])->defaults('catalog', $key)->name("catalogs.{$key}.update");
+        Route::delete("mantenedores/{$key}/{id}", [CatalogController::class, 'destroy'])->defaults('catalog', $key)->name("catalogs.{$key}.destroy");
+    }
 });
 
 // Administración y Coordinador (el coordinador solo ve lo de su carrera)

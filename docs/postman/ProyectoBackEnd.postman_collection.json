@@ -1,0 +1,823 @@
+{
+  "info": {
+    "name": "ProyectoBackEnd · API REST v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Colección de las 2 APIs públicas y 2 privadas. Orden sugerido: carpeta Autenticación → login, luego el resto."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "API Pública 1 · Ofertas de práctica",
+      "description": "Consulta abierta (sin token) de las ofertas de práctica que ya fueron aprobadas por coordinación. Límite: 60 solicitudes por minuto por IP.",
+      "item": [
+        {
+          "name": "GET /public/offers — Listar ofertas aprobadas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/public/offers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "public",
+                "offers"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "desarrollo",
+                  "disabled": true
+                },
+                {
+                  "key": "career_id",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "modalidad",
+                  "value": "Híbrida",
+                  "disabled": true
+                },
+                {
+                  "key": "area",
+                  "value": "Tecnología",
+                  "disabled": true
+                },
+                {
+                  "key": "ubicacion",
+                  "value": "Concepción",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar ofertas aprobadas",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "const j = pm.response.json();",
+                  "pm.test('incluye data y meta', () => { pm.expect(j).to.have.property('data'); pm.expect(j).to.have.property('meta'); });",
+                  "if (j.data.length) { pm.collectionVariables.set('offer_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /public/offers/{id} — Detalle de una oferta aprobada",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/public/offers/{{offer_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "public",
+                "offers",
+                "{{offer_id}}"
+              ]
+            },
+            "description": "Detalle de una oferta aprobada",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('tiene id y título', () => { const d = pm.response.json().data; pm.expect(d).to.have.property('id'); pm.expect(d).to.have.property('titulo'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "API Pública 2 · Carreras y empresas",
+      "description": "Directorio abierto de carreras activas y empresas colaboradoras con su valoración promedio. No expone RUT ni datos de contacto. Límite: 60 solicitudes por minuto por IP.",
+      "item": [
+        {
+          "name": "GET /public/careers — Listar carreras activas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/public/careers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "public",
+                "careers"
+              ]
+            },
+            "description": "Listar carreras activas",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('data es un arreglo', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /public/companies — Listar empresas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/public/companies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "public",
+                "companies"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "tech",
+                  "disabled": true
+                },
+                {
+                  "key": "rubro",
+                  "value": "Software",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar empresas",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "const j = pm.response.json();",
+                  "pm.expect(j).to.have.property('meta');",
+                  "if (j.data.length) { pm.collectionVariables.set('company_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /public/companies/{id} — Detalle de una empresa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/public/companies/{{company_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "public",
+                "companies",
+                "{{company_id}}"
+              ]
+            },
+            "description": "Detalle de una empresa",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('incluye ofertas y reseñas', () => { const d = pm.response.json().data; pm.expect(d).to.have.property('ofertas'); pm.expect(d).to.have.property('resenas'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Autenticación (API privada)",
+      "description": "La API privada usa tokens Bearer. Se obtiene un token con /auth/login y se envía en cada solicitud como  Authorization: Bearer <token>. El token dura 7 días y se puede revocar con /auth/logout. Login: máximo 10 intentos por minuto.",
+      "item": [
+        {
+          "name": "POST /auth/login — Iniciar sesión y obtener token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Iniciar sesión y obtener token\n\nUsuarios de prueba (seeders), contraseña 12345678: admin@ucsc.cl (Administrador), juan@ucsc.cl y maria@ucsc.cl (Estudiante), coordinador@ucsc.cl (Coordinador), empresa@gmail.com (Empresa).",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"device_name\": \"postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "const j = pm.response.json();",
+                  "pm.test('entrega token Bearer', () => { pm.expect(j.token).to.be.a('string'); pm.expect(j.token_type).to.eql('Bearer'); });",
+                  "pm.collectionVariables.set('token', j.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me — Datos del usuario autenticado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Datos del usuario autenticado"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('devuelve roles', () => pm.expect(pm.response.json().data.roles).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "API Privada 1 · Postulaciones",
+      "description": "Gestión de postulaciones a ofertas. Cada rol solo ve lo suyo: el estudiante sus postulaciones, el coordinador las de su carrera, la empresa las de sus ofertas y el administrador todas.",
+      "item": [
+        {
+          "name": "GET /applications — Listar postulaciones visibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/applications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "applications"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Postulado",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar postulaciones visibles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "const j = pm.response.json();",
+                  "pm.expect(j).to.have.property('meta');",
+                  "if (j.data.length) { pm.collectionVariables.set('application_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /applications/{id} — Detalle de una postulación (con mensajes)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/applications/{{application_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "applications",
+                "{{application_id}}"
+              ]
+            },
+            "description": "Detalle de una postulación (con mensajes)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('incluye mensajes', () => pm.expect(pm.response.json().data).to.have.property('mensajes'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /applications — Postular a una oferta (funcionalidad crítica)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/applications",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "applications"
+              ]
+            },
+            "description": "Postular a una oferta (funcionalidad crítica)\n\nSe envía como multipart/form-data. En Postman, selecciona un archivo en el campo «cv» antes de enviar.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "offer_id",
+                  "value": "{{offer_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "carta_motivacion",
+                  "value": "Me interesa esta práctica porque...",
+                  "type": "text"
+                },
+                {
+                  "key": "cv",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('postulación creada en estado Postulado', () => pm.expect(pm.response.json().data.estado).to.eql('Postulado'));",
+                  "pm.collectionVariables.set('new_application_id', pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /applications/{id} — Retirar una postulación propia",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/applications/{{new_application_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "applications",
+                "{{new_application_id}}"
+              ]
+            },
+            "description": "Retirar una postulación propia"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "API Privada 2 · Prácticas y bitácoras",
+      "description": "Consulta de prácticas con sus evaluaciones y registro de la bitácora quincenal. Mismo alcance por rol que las postulaciones.",
+      "item": [
+        {
+          "name": "GET /practices — Listar prácticas visibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/practices",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "practices"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "En Curso",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Listar prácticas visibles"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "const j = pm.response.json();",
+                  "pm.expect(j).to.have.property('meta');",
+                  "if (j.data.length) { pm.collectionVariables.set('practice_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /practices/{id} — Detalle de práctica (horas, evaluaciones, nota final, reseña)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/practices/{{practice_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "practices",
+                "{{practice_id}}"
+              ]
+            },
+            "description": "Detalle de práctica (horas, evaluaciones, nota final, reseña)"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('incluye evaluaciones', () => pm.expect(pm.response.json().data).to.have.property('evaluaciones'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /practices/{id}/logs — Listar bitácoras de una práctica",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/practices/{{practice_id}}/logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "practices",
+                "{{practice_id}}",
+                "logs"
+              ]
+            },
+            "description": "Listar bitácoras de una práctica"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.expect(pm.response.json().meta).to.have.property('horas_totales');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /practices/{id}/logs — Registrar bitácora quincenal (funcionalidad crítica)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/practices/{{practice_id}}/logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "practices",
+                "{{practice_id}}",
+                "logs"
+              ]
+            },
+            "description": "Registrar bitácora quincenal (funcionalidad crítica)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"period_start\": \"2026-11-02\",\n  \"period_end\": \"2026-11-13\",\n  \"hours\": 80,\n  \"activities\": \"Desarrollo de vistas del módulo de reportes y pruebas de integración.\",\n  \"learnings\": \"Uso de Git flow.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);",
+                  "pm.test('bitácora creada', () => pm.expect(pm.response.json().data).to.have.property('id'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cerrar sesión (ejecutar al final)",
+      "item": [
+        {
+          "name": "POST /auth/logout — Cerrar sesión (revoca el token actual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Cerrar sesión (revoca el token actual)\n\nEn Postman, después de ejecutar este request vuelve a ejecutar el login para obtener un token nuevo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Responde en JSON', () => pm.response.to.be.json);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "offer_id",
+      "value": ""
+    },
+    {
+      "key": "company_id",
+      "value": ""
+    },
+    {
+      "key": "application_id",
+      "value": ""
+    },
+    {
+      "key": "new_application_id",
+      "value": ""
+    },
+    {
+      "key": "practice_id",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,1312 @@
+{
+  "info": {
+    "title": "API REST · Plataforma de Prácticas Profesionales",
+    "version": "v1",
+    "base_url": "http://127.0.0.1:8000/api/v1",
+    "description": "API REST en JSON del sistema de gestión de prácticas (Laravel). Incluye 2 APIs públicas y 2 privadas. Todas las respuestas son JSON; los errores de validación devuelven 422 con el detalle por campo."
+  },
+  "groups": [
+    {
+      "id": "public-offers",
+      "name": "API Pública 1 · Ofertas de práctica",
+      "visibility": "public",
+      "description": "Consulta abierta (sin token) de las ofertas de práctica que ya fueron aprobadas por coordinación. Límite: 60 solicitudes por minuto por IP.",
+      "endpoints": [
+        {
+          "id": "offers-list",
+          "method": "GET",
+          "path": "/public/offers",
+          "summary": "Listar ofertas aprobadas",
+          "auth": false,
+          "roles": [],
+          "params": [
+            {
+              "name": "search",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Texto a buscar en título, empresa o área.",
+              "example": "desarrollo"
+            },
+            {
+              "name": "career_id",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Solo ofertas dirigidas a esta carrera.",
+              "example": 1
+            },
+            {
+              "name": "modalidad",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Presencial, Remota o Híbrida.",
+              "example": "Híbrida"
+            },
+            {
+              "name": "area",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Área de la oferta (búsqueda parcial).",
+              "example": "Tecnología"
+            },
+            {
+              "name": "ubicacion",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Ciudad o región (búsqueda parcial).",
+              "example": "Concepción"
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Resultados por página (1 a 50, por defecto 10).",
+              "example": 10
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Número de página.",
+              "example": 1
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": [
+                  {
+                    "id": 3,
+                    "titulo": "Practicante de Desarrollo Web",
+                    "empresa": "TechSur SpA",
+                    "area": "Tecnología",
+                    "modalidad": "Híbrida",
+                    "ubicacion": "Concepción",
+                    "duracion_semanas": 16,
+                    "vacantes": 2,
+                    "vacantes_disponibles": 2,
+                    "carreras": [
+                      {
+                        "id": 1,
+                        "nombre": "Ingeniería Civil Informática"
+                      }
+                    ]
+                  }
+                ],
+                "meta": {
+                  "total": 12,
+                  "page": 1,
+                  "per_page": 10,
+                  "last_page": 2
+                }
+              }
+            },
+            {
+              "status": 422,
+              "description": "Error de validación.",
+              "example": {
+                "message": "The hours field is required.",
+                "errors": {
+                  "hours": [
+                    "The hours field is required."
+                  ]
+                }
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "const j = pm.response.json();",
+            "pm.test('incluye data y meta', () => { pm.expect(j).to.have.property('data'); pm.expect(j).to.have.property('meta'); });",
+            "if (j.data.length) { pm.collectionVariables.set('offer_id', j.data[0].id); }"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/public/offers?search=desarrollo&career_id=1\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "offers-show",
+          "method": "GET",
+          "path": "/public/offers/{id}",
+          "summary": "Detalle de una oferta aprobada",
+          "auth": false,
+          "roles": [],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la oferta.",
+              "example": 3
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 3,
+                  "titulo": "Practicante de Desarrollo Web",
+                  "empresa": "TechSur SpA",
+                  "area": "Tecnología",
+                  "modalidad": "Híbrida",
+                  "ubicacion": "Concepción",
+                  "duracion_semanas": 16,
+                  "vacantes": 2,
+                  "vacantes_disponibles": 2,
+                  "carreras": [
+                    {
+                      "id": 1,
+                      "nombre": "Ingeniería Civil Informática"
+                    }
+                  ],
+                  "perfil": "Estudiante de 4.º año con conocimientos de Laravel.",
+                  "nivel_requerido": "Avanzado",
+                  "promedio_minimo": 5.0,
+                  "horario": "Lunes a viernes 9:00–14:00",
+                  "remuneracion": 250000.0,
+                  "habilidades": [
+                    "PHP",
+                    "Laravel",
+                    "MySQL"
+                  ],
+                  "rubro_empresa": "Software"
+                }
+              }
+            },
+            {
+              "status": 404,
+              "description": "Oferta no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Oferta no encontrada."
+              }
+            }
+          ],
+          "idvar": "offer_id",
+          "expect_status": 200,
+          "expect_js": [
+            "pm.test('tiene id y título', () => { const d = pm.response.json().data; pm.expect(d).to.have.property('id'); pm.expect(d).to.have.property('titulo'); });"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/public/offers/{id}\" \\\n  -H \"Accept: application/json\""
+        }
+      ]
+    },
+    {
+      "id": "public-directory",
+      "name": "API Pública 2 · Carreras y empresas",
+      "visibility": "public",
+      "description": "Directorio abierto de carreras activas y empresas colaboradoras con su valoración promedio. No expone RUT ni datos de contacto. Límite: 60 solicitudes por minuto por IP.",
+      "endpoints": [
+        {
+          "id": "careers-list",
+          "method": "GET",
+          "path": "/public/careers",
+          "summary": "Listar carreras activas",
+          "auth": false,
+          "roles": [],
+          "params": [],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": [
+                  {
+                    "id": 1,
+                    "codigo": "ICI",
+                    "nombre": "Ingeniería Civil Informática"
+                  }
+                ]
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "pm.test('data es un arreglo', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/public/careers\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "companies-list",
+          "method": "GET",
+          "path": "/public/companies",
+          "summary": "Listar empresas",
+          "auth": false,
+          "roles": [],
+          "params": [
+            {
+              "name": "search",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Texto a buscar en razón social o rubro.",
+              "example": "tech"
+            },
+            {
+              "name": "rubro",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Rubro (búsqueda parcial).",
+              "example": "Software"
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Resultados por página (1 a 50, por defecto 10).",
+              "example": 10
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Número de página.",
+              "example": 1
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": [
+                  {
+                    "id": 1,
+                    "razon_social": "TechSur SpA",
+                    "rubro": "Software",
+                    "sitio_web": "https://techsur.cl",
+                    "direccion": "Barros Arana 100, Concepción",
+                    "rating_promedio": 4.5,
+                    "total_resenas": 4,
+                    "ofertas_aprobadas": 2
+                  }
+                ],
+                "meta": {
+                  "total": 12,
+                  "page": 1,
+                  "per_page": 10,
+                  "last_page": 2
+                }
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "const j = pm.response.json();",
+            "pm.expect(j).to.have.property('meta');",
+            "if (j.data.length) { pm.collectionVariables.set('company_id', j.data[0].id); }"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/public/companies?search=tech&rubro=Software\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "companies-show",
+          "method": "GET",
+          "path": "/public/companies/{id}",
+          "summary": "Detalle de una empresa",
+          "auth": false,
+          "roles": [],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la empresa.",
+              "example": 1
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 1,
+                  "razon_social": "TechSur SpA",
+                  "rubro": "Software",
+                  "sitio_web": "https://techsur.cl",
+                  "direccion": "Barros Arana 100, Concepción",
+                  "rating_promedio": 4.5,
+                  "total_resenas": 4,
+                  "ofertas_aprobadas": 2,
+                  "ofertas": [
+                    {
+                      "id": 3,
+                      "titulo": "Practicante de Desarrollo Web",
+                      "modalidad": "Híbrida",
+                      "ubicacion": "Concepción"
+                    }
+                  ],
+                  "resenas": [
+                    {
+                      "valoracion": 5,
+                      "comentario": "Excelente equipo.",
+                      "fecha": "2026-11-09"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "status": 404,
+              "description": "Empresa no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Empresa no encontrada."
+              }
+            }
+          ],
+          "idvar": "company_id",
+          "expect_status": 200,
+          "expect_js": [
+            "pm.test('incluye ofertas y reseñas', () => { const d = pm.response.json().data; pm.expect(d).to.have.property('ofertas'); pm.expect(d).to.have.property('resenas'); });"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/public/companies/{id}\" \\\n  -H \"Accept: application/json\""
+        }
+      ]
+    },
+    {
+      "id": "auth",
+      "name": "Autenticación (API privada)",
+      "visibility": "private",
+      "description": "La API privada usa tokens Bearer. Se obtiene un token con /auth/login y se envía en cada solicitud como  Authorization: Bearer <token>. El token dura 7 días y se puede revocar con /auth/logout. Login: máximo 10 intentos por minuto.",
+      "endpoints": [
+        {
+          "id": "auth-login",
+          "method": "POST",
+          "path": "/auth/login",
+          "summary": "Iniciar sesión y obtener token",
+          "auth": false,
+          "roles": [],
+          "params": [],
+          "body": [
+            {
+              "name": "email",
+              "in": "body",
+              "type": "string",
+              "required": true,
+              "description": "Correo del usuario.",
+              "example": "juan@ucsc.cl"
+            },
+            {
+              "name": "password",
+              "in": "body",
+              "type": "string",
+              "required": true,
+              "description": "Contraseña.",
+              "example": "12345678"
+            },
+            {
+              "name": "device_name",
+              "in": "body",
+              "type": "string",
+              "required": false,
+              "description": "Nombre del dispositivo (opcional).",
+              "example": "postman"
+            }
+          ],
+          "body_type": "json",
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "token": "q8Wk...64 caracteres...Zr",
+                "token_type": "Bearer",
+                "expires_at": "2026-11-20T10:00:00-03:00",
+                "user": {
+                  "id": 2,
+                  "name": "Juan",
+                  "last_name": "Pérez",
+                  "email": "juan@ucsc.cl",
+                  "career_id": 1,
+                  "roles": [
+                    "Estudiante"
+                  ]
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Credenciales incorrectas.",
+              "example": {
+                "message": "Credenciales inválidas."
+              }
+            },
+            {
+              "status": 422,
+              "description": "Error de validación.",
+              "example": {
+                "message": "The hours field is required.",
+                "errors": {
+                  "hours": [
+                    "The hours field is required."
+                  ]
+                }
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "const j = pm.response.json();",
+            "pm.test('entrega token Bearer', () => { pm.expect(j.token).to.be.a('string'); pm.expect(j.token_type).to.eql('Bearer'); });",
+            "pm.collectionVariables.set('token', j.token);"
+          ],
+          "note": "Usuarios de prueba (seeders), contraseña 12345678: admin@ucsc.cl (Administrador), juan@ucsc.cl y maria@ucsc.cl (Estudiante), coordinador@ucsc.cl (Coordinador), empresa@gmail.com (Empresa).",
+          "curl": "curl -X POST \"__BASE__/auth/login\" \\\n  -H \"Accept: application/json\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"email\": \"juan@ucsc.cl\", \"password\": \"12345678\", \"device_name\": \"postman\"}'"
+        },
+        {
+          "id": "auth-me",
+          "method": "GET",
+          "path": "/auth/me",
+          "summary": "Datos del usuario autenticado",
+          "auth": true,
+          "roles": [],
+          "params": [],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 2,
+                  "name": "Juan",
+                  "last_name": "Pérez",
+                  "email": "juan@ucsc.cl",
+                  "career_id": 1,
+                  "roles": [
+                    "Estudiante"
+                  ]
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "pm.test('devuelve roles', () => pm.expect(pm.response.json().data.roles).to.be.an('array'));"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/auth/me\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "auth-logout",
+          "method": "POST",
+          "path": "/auth/logout",
+          "summary": "Cerrar sesión (revoca el token actual)",
+          "auth": true,
+          "roles": [],
+          "params": [],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "message": "Sesión cerrada. El token fue revocado."
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [],
+          "note": "En Postman, después de ejecutar este request vuelve a ejecutar el login para obtener un token nuevo.",
+          "curl": "curl -X POST \"__BASE__/auth/logout\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        }
+      ]
+    },
+    {
+      "id": "private-applications",
+      "name": "API Privada 1 · Postulaciones",
+      "visibility": "private",
+      "description": "Gestión de postulaciones a ofertas. Cada rol solo ve lo suyo: el estudiante sus postulaciones, el coordinador las de su carrera, la empresa las de sus ofertas y el administrador todas.",
+      "endpoints": [
+        {
+          "id": "applications-list",
+          "method": "GET",
+          "path": "/applications",
+          "summary": "Listar postulaciones visibles",
+          "auth": true,
+          "roles": [
+            "Estudiante",
+            "Coordinador",
+            "Empresa",
+            "Administrador"
+          ],
+          "params": [
+            {
+              "name": "status",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Filtra por estado: Postulado, Asignado o Rechazado.",
+              "example": "Postulado"
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Resultados por página (1 a 50, por defecto 10).",
+              "example": 10
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Número de página.",
+              "example": 1
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": [
+                  {
+                    "id": 7,
+                    "estado": "Postulado",
+                    "afinidad": 75.0,
+                    "tiene_cv": true,
+                    "fecha_postulacion": "2026-11-10T14:32:00-03:00",
+                    "fecha_decision": null,
+                    "estudiante": {
+                      "id": 1,
+                      "nombre": "Juan Pérez",
+                      "carrera": "Ingeniería Civil Informática"
+                    },
+                    "oferta": {
+                      "id": 3,
+                      "titulo": "Practicante de Desarrollo Web",
+                      "empresa": "TechSur SpA"
+                    }
+                  }
+                ],
+                "meta": {
+                  "total": 12,
+                  "page": 1,
+                  "per_page": 10,
+                  "last_page": 2
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 403,
+              "description": "El rol del usuario no tiene permiso.",
+              "example": {
+                "message": "Tu rol no tiene acceso a las postulaciones."
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "const j = pm.response.json();",
+            "pm.expect(j).to.have.property('meta');",
+            "if (j.data.length) { pm.collectionVariables.set('application_id', j.data[0].id); }"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/applications?status=Postulado&per_page=10\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "applications-show",
+          "method": "GET",
+          "path": "/applications/{id}",
+          "summary": "Detalle de una postulación (con mensajes)",
+          "auth": true,
+          "roles": [
+            "Estudiante",
+            "Coordinador",
+            "Empresa",
+            "Administrador"
+          ],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la postulación.",
+              "example": 7
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 7,
+                  "estado": "Postulado",
+                  "afinidad": 75.0,
+                  "tiene_cv": true,
+                  "fecha_postulacion": "2026-11-10T14:32:00-03:00",
+                  "fecha_decision": null,
+                  "estudiante": {
+                    "id": 1,
+                    "nombre": "Juan Pérez",
+                    "carrera": "Ingeniería Civil Informática"
+                  },
+                  "oferta": {
+                    "id": 3,
+                    "titulo": "Practicante de Desarrollo Web",
+                    "empresa": "TechSur SpA"
+                  },
+                  "motivacion": "Me interesa aplicar lo aprendido en proyectos reales.",
+                  "mensajes": [
+                    {
+                      "id": 1,
+                      "user_id": 3,
+                      "estado_postulacion": "Postulado",
+                      "mensaje": "Hola, revisamos tu CV.",
+                      "fecha": "2026-11-11T09:00:00-03:00"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 404,
+              "description": "Postulación no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Postulación no encontrada."
+              }
+            }
+          ],
+          "idvar": "application_id",
+          "expect_status": 200,
+          "expect_js": [
+            "pm.test('incluye mensajes', () => pm.expect(pm.response.json().data).to.have.property('mensajes'));"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/applications/{id}\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "applications-store",
+          "method": "POST",
+          "path": "/applications",
+          "summary": "Postular a una oferta (funcionalidad crítica)",
+          "auth": true,
+          "roles": [
+            "Estudiante"
+          ],
+          "params": [],
+          "body": [
+            {
+              "name": "offer_id",
+              "in": "body",
+              "type": "integer",
+              "required": true,
+              "description": "ID de una oferta aprobada.",
+              "example": 3
+            },
+            {
+              "name": "carta_motivacion",
+              "in": "body",
+              "type": "string",
+              "required": true,
+              "description": "Carta de motivación (máx. 10000 caracteres).",
+              "example": "Me interesa esta práctica porque..."
+            },
+            {
+              "name": "cv",
+              "in": "body",
+              "type": "file",
+              "required": true,
+              "description": "Currículum en PDF, DOC o DOCX (máx. 5 MB).",
+              "example": "cv.pdf"
+            }
+          ],
+          "body_type": "multipart",
+          "responses": [
+            {
+              "status": 201,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 7,
+                  "estado": "Postulado",
+                  "afinidad": 75.0,
+                  "tiene_cv": true,
+                  "fecha_postulacion": "2026-11-10T14:32:00-03:00",
+                  "fecha_decision": null,
+                  "estudiante": {
+                    "id": 1,
+                    "nombre": "Juan Pérez",
+                    "carrera": "Ingeniería Civil Informática"
+                  },
+                  "oferta": {
+                    "id": 3,
+                    "titulo": "Practicante de Desarrollo Web",
+                    "empresa": "TechSur SpA"
+                  }
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 403,
+              "description": "El usuario no es estudiante.",
+              "example": {
+                "message": "Solo los estudiantes pueden postular."
+              }
+            },
+            {
+              "status": 422,
+              "description": "Reglas de negocio o validación: oferta no aprobada, sin cupos, carrera distinta, promedio insuficiente o postulación duplicada.",
+              "example": {
+                "message": "La oferta ya no tiene cupos disponibles.",
+                "errors": {
+                  "offer_id": [
+                    "La oferta ya no tiene cupos disponibles."
+                  ]
+                }
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 201,
+          "expect_js": [
+            "pm.test('postulación creada en estado Postulado', () => pm.expect(pm.response.json().data.estado).to.eql('Postulado'));",
+            "pm.collectionVariables.set('new_application_id', pm.response.json().data.id);"
+          ],
+          "note": "Se envía como multipart/form-data. En Postman, selecciona un archivo en el campo «cv» antes de enviar.",
+          "curl": "curl -X POST \"__BASE__/applications\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\" \\\n  -F \"offer_id=3\" \\\n  -F \"carta_motivacion=Me interesa esta práctica porque...\" \\\n  -F \"cv=@cv.pdf\""
+        },
+        {
+          "id": "applications-destroy",
+          "method": "DELETE",
+          "path": "/applications/{id}",
+          "summary": "Retirar una postulación propia",
+          "auth": true,
+          "roles": [
+            "Estudiante"
+          ],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la postulación (debe estar en estado Postulado).",
+              "example": 7
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "message": "Postulación retirada."
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 403,
+              "description": "El rol del usuario no tiene permiso.",
+              "example": {
+                "message": "Tu rol no tiene acceso a las postulaciones."
+              }
+            },
+            {
+              "status": 404,
+              "description": "Postulación no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Postulación no encontrada."
+              }
+            },
+            {
+              "status": 409,
+              "description": "La postulación ya fue resuelta.",
+              "example": {
+                "message": "No puedes retirar una postulación que ya fue resuelta."
+              }
+            }
+          ],
+          "idvar": "new_application_id",
+          "expect_status": 200,
+          "expect_js": [],
+          "note": null,
+          "curl": "curl -X DELETE \"__BASE__/applications/{id}\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        }
+      ]
+    },
+    {
+      "id": "private-practices",
+      "name": "API Privada 2 · Prácticas y bitácoras",
+      "visibility": "private",
+      "description": "Consulta de prácticas con sus evaluaciones y registro de la bitácora quincenal. Mismo alcance por rol que las postulaciones.",
+      "endpoints": [
+        {
+          "id": "practices-list",
+          "method": "GET",
+          "path": "/practices",
+          "summary": "Listar prácticas visibles",
+          "auth": true,
+          "roles": [
+            "Estudiante",
+            "Coordinador",
+            "Empresa",
+            "Administrador"
+          ],
+          "params": [
+            {
+              "name": "estado",
+              "in": "query",
+              "type": "string",
+              "required": false,
+              "description": "Asignado, En Curso, Informe Entregado, Evaluado o Finalizada.",
+              "example": "En Curso"
+            },
+            {
+              "name": "per_page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Resultados por página (1 a 50, por defecto 10).",
+              "example": 10
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "type": "integer",
+              "required": false,
+              "description": "Número de página.",
+              "example": 1
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": [
+                  {
+                    "id": 2,
+                    "estado": "En Curso",
+                    "fecha_inicio": "2026-11-01",
+                    "fecha_termino": "2027-02-20",
+                    "nota_final": null,
+                    "contratado": false,
+                    "estudiante": {
+                      "nombre": "Juan Pérez",
+                      "carrera": "Ingeniería Civil Informática"
+                    },
+                    "oferta": {
+                      "id": 3,
+                      "titulo": "Practicante de Desarrollo Web",
+                      "empresa": "TechSur SpA"
+                    }
+                  }
+                ],
+                "meta": {
+                  "total": 12,
+                  "page": 1,
+                  "per_page": 10,
+                  "last_page": 2
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 403,
+              "description": "El rol del usuario no tiene permiso.",
+              "example": {
+                "message": "Tu rol no tiene acceso a las postulaciones."
+              }
+            }
+          ],
+          "idvar": null,
+          "expect_status": 200,
+          "expect_js": [
+            "const j = pm.response.json();",
+            "pm.expect(j).to.have.property('meta');",
+            "if (j.data.length) { pm.collectionVariables.set('practice_id', j.data[0].id); }"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/practices?estado=En Curso&per_page=10\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "practices-show",
+          "method": "GET",
+          "path": "/practices/{id}",
+          "summary": "Detalle de práctica (horas, evaluaciones, nota final, reseña)",
+          "auth": true,
+          "roles": [
+            "Estudiante",
+            "Coordinador",
+            "Empresa",
+            "Administrador"
+          ],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la práctica.",
+              "example": 2
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 2,
+                  "estado": "En Curso",
+                  "fecha_inicio": "2026-11-01",
+                  "fecha_termino": "2027-02-20",
+                  "nota_final": null,
+                  "contratado": false,
+                  "estudiante": {
+                    "nombre": "Juan Pérez",
+                    "carrera": "Ingeniería Civil Informática"
+                  },
+                  "oferta": {
+                    "id": 3,
+                    "titulo": "Practicante de Desarrollo Web",
+                    "empresa": "TechSur SpA"
+                  },
+                  "horas_registradas": 160,
+                  "nota_final_calculada": 6.3,
+                  "evaluaciones": [
+                    {
+                      "rol": "supervisor",
+                      "nota": 6.5,
+                      "puntajes": {
+                        "responsabilidad": 6.5,
+                        "calidad": 6.5
+                      },
+                      "comentarios": "Muy buen desempeño."
+                    }
+                  ],
+                  "resena_empresa": {
+                    "valoracion": 5,
+                    "comentario": "Excelente experiencia."
+                  }
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 404,
+              "description": "Práctica no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Práctica no encontrada."
+              }
+            }
+          ],
+          "idvar": "practice_id",
+          "expect_status": 200,
+          "expect_js": [
+            "pm.test('incluye evaluaciones', () => pm.expect(pm.response.json().data).to.have.property('evaluaciones'));"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/practices/{id}\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "practices-logs",
+          "method": "GET",
+          "path": "/practices/{id}/logs",
+          "summary": "Listar bitácoras de una práctica",
+          "auth": true,
+          "roles": [
+            "Estudiante",
+            "Coordinador",
+            "Empresa",
+            "Administrador"
+          ],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la práctica.",
+              "example": 2
+            }
+          ],
+          "body": [],
+          "body_type": null,
+          "responses": [
+            {
+              "status": 200,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": [
+                  {
+                    "id": 5,
+                    "desde": "2026-11-02",
+                    "hasta": "2026-11-13",
+                    "horas": 80,
+                    "actividades": "Desarrollo de vistas del módulo de reportes y pruebas de integración.",
+                    "aprendizajes": "Uso de Git flow.",
+                    "dificultades": null
+                  }
+                ],
+                "meta": {
+                  "total": 1,
+                  "horas_totales": 80
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 404,
+              "description": "Práctica no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Práctica no encontrada."
+              }
+            }
+          ],
+          "idvar": "practice_id",
+          "expect_status": 200,
+          "expect_js": [
+            "pm.expect(pm.response.json().meta).to.have.property('horas_totales');"
+          ],
+          "note": null,
+          "curl": "curl -X GET \"__BASE__/practices/{id}/logs\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\""
+        },
+        {
+          "id": "practices-logs-store",
+          "method": "POST",
+          "path": "/practices/{id}/logs",
+          "summary": "Registrar bitácora quincenal (funcionalidad crítica)",
+          "auth": true,
+          "roles": [
+            "Estudiante"
+          ],
+          "params": [
+            {
+              "name": "id",
+              "in": "path",
+              "type": "integer",
+              "required": true,
+              "description": "ID de la práctica propia.",
+              "example": 2
+            }
+          ],
+          "body": [
+            {
+              "name": "period_start",
+              "in": "body",
+              "type": "date",
+              "required": true,
+              "description": "Inicio del período (AAAA-MM-DD, no futuro).",
+              "example": "2026-11-02"
+            },
+            {
+              "name": "period_end",
+              "in": "body",
+              "type": "date",
+              "required": true,
+              "description": "Fin del período (máximo una quincena).",
+              "example": "2026-11-13"
+            },
+            {
+              "name": "hours",
+              "in": "body",
+              "type": "integer",
+              "required": true,
+              "description": "Horas trabajadas (1 a 120).",
+              "example": 80
+            },
+            {
+              "name": "activities",
+              "in": "body",
+              "type": "string",
+              "required": true,
+              "description": "Actividades realizadas (mínimo 20 caracteres).",
+              "example": "Desarrollo de vistas del módulo de reportes y pruebas de integración."
+            },
+            {
+              "name": "learnings",
+              "in": "body",
+              "type": "string",
+              "required": false,
+              "description": "Aprendizajes.",
+              "example": "Uso de Git flow."
+            },
+            {
+              "name": "difficulties",
+              "in": "body",
+              "type": "string",
+              "required": false,
+              "description": "Dificultades.",
+              "example": ""
+            }
+          ],
+          "body_type": "json",
+          "responses": [
+            {
+              "status": 201,
+              "description": "Respuesta exitosa.",
+              "example": {
+                "data": {
+                  "id": 5,
+                  "desde": "2026-11-02",
+                  "hasta": "2026-11-13",
+                  "horas": 80,
+                  "actividades": "Desarrollo de vistas del módulo de reportes y pruebas de integración.",
+                  "aprendizajes": "Uso de Git flow.",
+                  "dificultades": null
+                }
+              }
+            },
+            {
+              "status": 401,
+              "description": "Token ausente, inválido o expirado.",
+              "example": {
+                "message": "Token inválido o expirado."
+              }
+            },
+            {
+              "status": 403,
+              "description": "El usuario no es el estudiante de la práctica.",
+              "example": {
+                "message": "Solo el estudiante de la práctica puede registrar su bitácora."
+              }
+            },
+            {
+              "status": 404,
+              "description": "Práctica no existe o no es visible para el usuario.",
+              "example": {
+                "message": "Práctica no encontrada."
+              }
+            },
+            {
+              "status": 409,
+              "description": "La práctica no está «En Curso» ni con informe entregado.",
+              "example": {
+                "message": "La bitácora se registra mientras la práctica está «En Curso» o con el informe entregado."
+              }
+            },
+            {
+              "status": 422,
+              "description": "Error de validación.",
+              "example": {
+                "message": "The hours field is required.",
+                "errors": {
+                  "hours": [
+                    "The hours field is required."
+                  ]
+                }
+              }
+            }
+          ],
+          "idvar": "practice_id",
+          "expect_status": 201,
+          "expect_js": [
+            "pm.test('bitácora creada', () => pm.expect(pm.response.json().data).to.have.property('id'));"
+          ],
+          "note": null,
+          "curl": "curl -X POST \"__BASE__/practices/{id}/logs\" \\\n  -H \"Authorization: Bearer <TOKEN>\" \\\n  -H \"Accept: application/json\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"period_start\": \"2026-11-02\", \"period_end\": \"2026-11-13\", \"hours\": 80, \"activities\": \"Desarrollo de vistas del módulo de reportes y pruebas de integración.\", \"learnings\": \"Uso de Git flow.\"}'"
+        }
+      ]
+    }
+  ]
+}
