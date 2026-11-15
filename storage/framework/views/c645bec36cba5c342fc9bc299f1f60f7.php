@@ -391,7 +391,7 @@
 
 <?php $__env->startPush('scripts'); ?>
     <script>
-        // DataTables en el CRUD de usuarios (búsqueda, orden y paginación).
+        // Tabla de usuarios
         if (document.getElementById('usersTable')) {
             initDataTable('#usersTable', '#userSearch', { order: [] });
         }

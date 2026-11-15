@@ -88,7 +88,7 @@
                     'activity' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
                 ];
 
-                // Cada sección del menú: [título, ¿se muestra?, [ [nombre de ruta, texto, ícono], ... ]]
+                // Secciones del menú: [título, visible, [[ruta, texto, ícono], ...]]
                 $menu = [
                     ['Administración', (bool) $currentUser?->hasAnyRole(['Administrador', 'Super Administrador']), [
                         ['dashboard', 'Usuarios y roles', 'users'],
@@ -99,8 +99,14 @@
                         ['offers.index', 'Ofertas', 'offers'],
                         ['applications.index', 'Postulaciones', 'applications'],
                         ['practices.index', 'Prácticas', 'practices'],
+                        ['catalogs.practice-logs.index', 'Bitácoras', 'practices'],
+                        ['catalogs.practice-evaluations.index', 'Evaluaciones', 'reports'],
+                        ['catalogs.company-reviews.index', 'Reseñas de empresa', 'companies'],
+                        ['catalogs.application-messages.index', 'Mensajes', 'applications'],
+                        ['catalogs.roles.index', 'Roles', 'users'],
                         ['reports.index', 'Indicadores', 'reports'],
                         ['activity.index', 'Historial de cambios', 'activity'],
+                        ['docs.api', 'Documentación API', 'search'],
                     ]],
                     ['Coordinador', (bool) $currentUser?->hasRole('Coordinador'), [
                         ['applications.index', 'Postulaciones', 'applications'],
@@ -174,7 +180,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <!-- Contenedor de Notificaciones (RF-10) -->
+                <!-- Notificaciones -->
                 <?php
                     $notificationUser = auth()->user();
                     $canNotify = $notificationUser && $notificationUser->exists;
@@ -267,20 +273,18 @@
 
         <main class="flex-1 overflow-y-auto bg-slate-50/50 p-4 sm:p-6 lg:p-8">
             <div class="max-w-[1400px] mx-auto">
-                <!-- CONTENIDO DINÁMICO -->
+                <!-- Contenido -->
                 <?php echo $__env->yieldContent('content'); ?>
             </div>
         </main>
     </div>
 
-    <!-- Carga de Scripts: jQuery, DataTables & SweetAlert2 -->
+    <!-- jQuery, DataTables y SweetAlert2 -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        /*
-         | Funciones compartidas por todos los mantenedores (carreras, empresas, ofertas, etc.).
-         */
+        // Funciones comunes de los mantenedores
 
         // Abre y cierra los modales del componente form-modal.
         function openModal(id) {
@@ -312,7 +316,7 @@
             openModal(id);
         }
 
-        // Abre un modal de "editar": cambia la URL del formulario y rellena los campos con los datos de la fila.
+        // Abre un modal de edición con los datos de la fila.
         function openEditModal(id, actionUrl, data, subtitle = null) {
             const modal = document.getElementById(id);
             const form = modal.querySelector('form');
@@ -325,7 +329,7 @@
             openModal(id);
         }
 
-        // Pone cada valor de "data" en el campo del formulario que tiene el mismo name.
+        // Rellena los campos del formulario según su name.
         function fillForm(form, data) {
             [...form.elements].forEach((input) => {
                 if (!input.name || input.type === 'hidden') return;
@@ -343,7 +347,7 @@
             });
         }
 
-        // Muestra datos en un modal de detalle: cada elemento con data-show="campo" recibe ese valor.
+        // Rellena un modal de detalle (elementos con data-show).
         function openShowModal(id, data) {
             document.querySelectorAll(`#${id} [data-show]`).forEach((element) => {
                 const value = data[element.dataset.show];
@@ -352,7 +356,7 @@
             openModal(id);
         }
 
-        // Activa DataTables sobre una tabla ya escrita en Blade y la conecta al buscador propio.
+        // DataTables con el buscador de la tarjeta.
         function initDataTable(tableSelector, searchSelector, options = {}) {
             const table = $(tableSelector).DataTable(Object.assign({
                 dom: 'rtip',
@@ -368,7 +372,7 @@
             return table;
         }
 
-        // Pide confirmación con SweetAlert2 y, si se acepta, envía el formulario indicado.
+        // Confirma con SweetAlert2 antes de enviar el formulario.
         function confirmSubmit(formId, { title, text, confirmText = 'Confirmar', color = '#C8102E', icon = 'warning' }) {
             Swal.fire({
                 title,
@@ -384,7 +388,7 @@
             });
         }
 
-        // Si un formulario volvió con errores de validación, se reabre su modal con lo escrito.
+        // Si hubo errores de validación, se reabre el modal.
         <?php if($errors->any() && old('_modal')): ?>
             document.addEventListener('DOMContentLoaded', () => {
                 const modal = document.getElementById(<?php echo \Illuminate\Support\Js::from(old('_modal'))->toHtml() ?>);
@@ -398,7 +402,7 @@
 
     <?php echo $__env->yieldPushContent('scripts'); ?>
 
-    <!-- Disparadores globales de SweetAlert2 para mensajes Flash de Laravel -->
+    <!-- Mensajes flash -->
     <?php if(session('success') || session('status')): ?>
     <script>
         Swal.fire({
@@ -422,7 +426,7 @@
     <?php endif; ?>
 
     <script>
-        // Función global para confirmación de eliminación con SweetAlert2
+        // Confirmación de eliminación
         function confirmDelete(formId) {
             Swal.fire({
                 title: '¿Estás seguro?',
