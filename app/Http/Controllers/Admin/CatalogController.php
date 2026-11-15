@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\Practice;
+use App\Models\PracticeEvaluation;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -53,7 +54,8 @@ class CatalogController extends Controller
         $data = $this->validated($request, $cfg, null);
 
         $model = $cfg['model'];
-        $model::create(array_merge($cfg['defaults'] ?? [], $data));
+        $record = $model::create(array_merge($cfg['defaults'] ?? [], $data));
+        $this->syncFinalGrade($record);
 
         return redirect()
             ->route("catalogs.$catalog.index")
@@ -72,6 +74,7 @@ class CatalogController extends Controller
         }
 
         $record->update($this->validated($request, $cfg, $record));
+        $this->syncFinalGrade($record);
 
         return redirect()
             ->route("catalogs.$catalog.index")
@@ -98,6 +101,7 @@ class CatalogController extends Controller
         }
 
         $record->delete();
+        $this->syncFinalGrade($record);
 
         return redirect()
             ->route("catalogs.$catalog.index")
@@ -105,6 +109,23 @@ class CatalogController extends Controller
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /**
+     * Al cambiar una evaluación desde el mantenedor, recalcula la nota final
+     * de su práctica (queda vacía si falta una de las dos rúbricas).
+     */
+    private function syncFinalGrade(Model $record): void
+    {
+        if (! $record instanceof PracticeEvaluation) {
+            return;
+        }
+
+        $practice = Practice::find($record->practice_id);
+        if ($practice) {
+            $practice->final_grade = $practice->calculateFinalGrade();
+            $practice->save();
+        }
+    }
 
     private function config(string $catalog): array
     {

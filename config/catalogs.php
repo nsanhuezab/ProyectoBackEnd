@@ -40,7 +40,7 @@ return [
             ['name' => 'practice_id', 'label' => 'Práctica', 'type' => 'select', 'source' => 'practices', 'rules' => ['required', 'integer', 'exists:practices,id']],
             ['name' => 'period_start', 'label' => 'Inicio del período', 'type' => 'date', 'rules' => ['required', 'date']],
             ['name' => 'period_end', 'label' => 'Fin del período', 'type' => 'date', 'rules' => ['required', 'date', 'after_or_equal:period_start']],
-            ['name' => 'hours', 'label' => 'Horas trabajadas', 'type' => 'number', 'min' => 1, 'max' => 400, 'rules' => ['required', 'integer', 'between:1,400']],
+            ['name' => 'hours', 'label' => 'Horas trabajadas', 'type' => 'number', 'min' => 1, 'max' => 120, 'rules' => ['required', 'integer', 'between:1,120']],
             ['name' => 'activities', 'label' => 'Actividades realizadas', 'type' => 'textarea', 'full' => true, 'rules' => ['required', 'string', 'max:5000']],
             ['name' => 'learnings', 'label' => 'Aprendizajes', 'type' => 'textarea', 'full' => true, 'rules' => ['nullable', 'string', 'max:5000']],
             ['name' => 'difficulties', 'label' => 'Dificultades', 'type' => 'textarea', 'full' => true, 'rules' => ['nullable', 'string', 'max:5000']],
