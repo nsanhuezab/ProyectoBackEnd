@@ -91,7 +91,7 @@
                             <td class="px-6 py-4 font-extrabold text-slate-400">{{ $position + 1 }}</td>
                             <td class="px-6 py-4 font-bold text-slate-800">{{ $row['empresa'] }}</td>
                             <td class="px-6 py-4">{{ $row['rubro'] }}</td>
-                            <td class="px-6 py-4" data-order="{{ $row['promedio'] }}">
+                            <td class="px-6 py-4" data-order="{{ (int) round($row['promedio'] * 100) }}">
                                 <span class="text-amber-500">{{ str_repeat('★', (int) round($row['promedio'])) }}</span><span class="text-slate-300">{{ str_repeat('★', 5 - (int) round($row['promedio'])) }}</span>
                                 <span class="ml-1 font-bold text-slate-700">{{ number_format($row['promedio'], 1, ',', '') }}</span>
                             </td>

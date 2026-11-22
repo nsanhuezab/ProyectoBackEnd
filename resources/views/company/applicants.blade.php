@@ -46,7 +46,7 @@
                                     @endforeach
                                 </div>
                             </td>
-                            <td class="px-6 py-4" data-order="{{ $score }}"><span class="font-bold text-slate-800">{{ round($score) }}%</span></td>
+                            <td class="px-6 py-4" data-order="{{ (int) round($score * 100) }}"><span class="font-bold text-slate-800">{{ round($score) }}%</span></td>
                             <td class="px-6 py-4 text-center"><x-status-badge :status="$application->status" /></td>
                             <td class="px-6 py-4 text-[12.5px] text-slate-600 max-w-[280px]">{{ \Illuminate\Support\Str::limit($application->motivation, 180) }}</td>
                         </tr>

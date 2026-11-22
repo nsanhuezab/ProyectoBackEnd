@@ -52,7 +52,7 @@
                                 <p class="font-medium text-slate-800">{{ $application->offer?->titulo }}</p>
                                 <p class="text-[12px] text-slate-500">{{ $companyName }}</p>
                             </td>
-                            <td class="px-6 py-4" data-order="{{ $score }}">
+                            <td class="px-6 py-4" data-order="{{ (int) round($score * 100) }}">
                                 <div class="flex items-center gap-2.5 w-36">
                                     <div class="h-2 flex-1 rounded-full bg-slate-100 overflow-hidden">
                                         <div class="h-full {{ $scoreColor }}" style="width: {{ min($score, 100) }}%"></div>

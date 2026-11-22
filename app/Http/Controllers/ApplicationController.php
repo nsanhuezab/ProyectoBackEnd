@@ -75,6 +75,9 @@ class ApplicationController extends Controller
                 if ($offer->estado !== 'Aprobada') {
                     throw ValidationException::withMessages(['offer_id' => 'La oferta no está aprobada para postular.']);
                 }
+                if ($offer->applications()->where('student_id', $student->id)->exists()) {
+                    throw ValidationException::withMessages(['offer_id' => 'Ya postulaste a esta oferta. Puedes revisarla en «Mis postulaciones».']);
+                }
                 if ($offer->applications()->whereHas('practice')->count() >= $offer->vacantes) {
                     throw ValidationException::withMessages(['offer_id' => 'La oferta ya no tiene cupos disponibles.']);
                 }
