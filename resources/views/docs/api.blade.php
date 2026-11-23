@@ -38,6 +38,18 @@
         .s2 { background:#dcfce7; color:#166534; } .s4 { background:#fee2e2; color:#991b1b; }
         .note { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 12px; font-size:13px; margin-top:12px; }
         .req { color:var(--red); font-weight:700; }
+        /* Celular y tablet: el índice pasa arriba y el contenido ocupa todo el ancho */
+        @media (max-width: 900px) {
+            .layout { flex-direction:column; }
+            aside { width:auto; height:auto; max-height:45vh; position:static; border-right:0; border-bottom:1px solid var(--line); }
+            main { max-width:100%; padding:20px 16px 60px; }
+            h1 { font-size:22px; }
+            .box, .ep .body { padding:12px 14px; }
+            .ep > header { padding:10px 14px; }
+            .path { word-break:break-all; }
+            .ep table { display:block; overflow-x:auto; }
+            code { word-break:break-word; }
+        }
         @media (max-width: 860px) { aside { display:none; } main { padding:20px; } }
     </style>
 </head>

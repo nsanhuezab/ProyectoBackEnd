@@ -27,7 +27,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
             </x-slot:icon>
 
-            <table id="practicesTable" class="w-full min-w-[1040px] text-left text-[13px] text-slate-600">
+            <table id="practicesTable" class="w-full lg:min-w-[1040px] text-left text-[13px] text-slate-600">
                 <thead class="bg-gray-50/60 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                     <tr>
                         <th class="px-6 py-3.5">Estudiante</th>

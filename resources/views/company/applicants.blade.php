@@ -12,7 +12,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </x-slot:icon>
 
-            <table id="applicantsTable" class="w-full min-w-[960px] text-left text-[13px] text-slate-600">
+            <table id="applicantsTable" class="w-full lg:min-w-[960px] text-left text-[13px] text-slate-600">
                 <thead class="bg-gray-50/60 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                     <tr>
                         <th class="px-6 py-3.5">Estudiante</th>

@@ -36,18 +36,18 @@
         </x-page-header>
 
         {{-- Avance del flujo de estados --}}
-        <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-200">
+        <div class="rounded-xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-gray-200">
             <div class="flex items-center justify-between gap-4 flex-wrap">
-                <ol class="flex flex-1 items-center min-w-[320px]">
+                <ol class="flex flex-1 items-start sm:items-center w-full min-w-0 sm:min-w-[320px]">
                     @foreach ($states as $index => $state)
                         @php $done = $index <= $stepIndex; @endphp
-                        <li class="flex items-center {{ $loop->last ? '' : 'flex-1' }}">
+                        <li class="flex items-start sm:items-center {{ $loop->last ? '' : 'flex-1' }}">
                             <div class="flex flex-col items-center gap-1.5">
                                 <span class="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold {{ $done ? 'bg-red-700 text-white' : 'bg-slate-100 text-slate-400 border border-slate-200' }}">{{ $index + 1 }}</span>
-                                <span class="text-[11px] font-semibold whitespace-nowrap {{ $done ? 'text-slate-800' : 'text-slate-400' }}">{{ $state }}</span>
+                                <span class="max-w-[60px] sm:max-w-none text-center leading-tight text-[10px] sm:text-[11px] font-semibold sm:whitespace-nowrap {{ $done ? 'text-slate-800' : 'text-slate-400' }}">{{ $state }}</span>
                             </div>
                             @if (! $loop->last)
-                                <span class="h-0.5 flex-1 mx-2 mb-5 {{ $index < $stepIndex ? 'bg-red-700' : 'bg-slate-200' }}"></span>
+                                <span class="h-0.5 flex-1 mx-1 sm:mx-2 mt-4 sm:mt-0 sm:mb-5 {{ $index < $stepIndex ? 'bg-red-700' : 'bg-slate-200' }}"></span>
                             @endif
                         </li>
                     @endforeach

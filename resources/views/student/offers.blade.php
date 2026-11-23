@@ -28,7 +28,7 @@
 
         <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div class="overflow-x-auto p-3 sm:p-5">
-                <table id="offersTable" class="w-full min-w-[820px] whitespace-nowrap text-left text-sm text-slate-700">
+                <table id="offersTable" class="w-full lg:min-w-[820px] lg:whitespace-nowrap text-left text-sm text-slate-700">
                     <thead><tr>
                         <th>Oferta</th><th>Empresa</th><th>Carreras</th><th>Área</th><th>Modalidad</th>
                         <th>Duración</th><th>Ubicación</th><th>Cupos</th><th>Acción</th>
@@ -39,7 +39,7 @@
     </section>
 
     <div id="applicationModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="applicationTitle">
-        <div class="w-full max-w-xl rounded-lg bg-white shadow-2xl">
+        <div class="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-lg bg-white shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <h2 id="applicationTitle" class="font-bold text-slate-900">Postular</h2>
                 <button type="button" id="closeApplication" class="rounded p-2 text-slate-500 hover:bg-slate-100" aria-label="Cerrar"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
@@ -72,7 +72,7 @@
             const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
             const filters = ['filterCareer', 'filterArea', 'filterModality', 'filterLocation'];
             const table = $('#offersTable').DataTable({
-                processing: true, serverSide: true, scrollX: true, pageLength: 10,
+                processing: true, serverSide: true, pageLength: 10,
                 language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
                 ajax: async (request, callback) => {
                     const order = request.order?.[0] ?? { column: 0, dir: 'asc' };
@@ -106,7 +106,9 @@
             document.getElementById('closeApplication').addEventListener('click', closeModal);
             document.getElementById('cancelApplication').addEventListener('click', closeModal);
             $('#offersTable').on('click', '[data-apply]', function () {
-                const offer = table.row($(this).closest('tr')).data();
+                let row = $(this).closest('tr');
+                if (row.hasClass('child')) row = row.prev();
+                const offer = table.row(row).data();
                 document.getElementById('applicationOfferId').value = offer.id;
                 document.getElementById('applicationTitle').textContent = `Postular a ${offer.titulo}`;
                 modal.classList.remove('hidden'); modal.classList.add('flex');

@@ -13,7 +13,7 @@
     <header class="flex flex-col gap-4 border-b-2 border-slate-800/80 pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.18em] text-red-700">{{ $section }}</p>
-            <h1 class="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">{{ $title }}</h1>
+            <h1 class="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">{{ $title }}</h1>
             @if ($description)
                 <p class="mt-1 text-sm text-slate-500">{{ $description }}</p>
             @endif

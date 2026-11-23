@@ -12,7 +12,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </x-slot:icon>
 
-            <table id="activityTable" class="w-full min-w-[960px] text-left text-[13px] text-slate-600">
+            <table id="activityTable" class="w-full lg:min-w-[960px] text-left text-[13px] text-slate-600">
                 <thead class="bg-gray-50/60 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                     <tr>
                         <th class="px-6 py-3.5">Fecha</th>

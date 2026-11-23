@@ -12,6 +12,7 @@
 
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
@@ -47,6 +48,15 @@
         }
         table.dataTable.no-footer { border-bottom: 0; }
         table.dataTable thead th { border-bottom: 1px solid #f1f5f9; }
+
+        /* Tablas en pantallas chicas: columnas ocultas se ven con el botón + de cada fila */
+        table.dataTable > tbody > tr.child ul.dtr-details { display: block; width: 100%; }
+        table.dataTable > tbody > tr.child ul.dtr-details > li { padding: 0.5rem 0; }
+        table.dataTable > tbody > tr.child span.dtr-title { min-width: 110px; font-weight: 700; color: #334155; }
+        table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before { color: #b91c1c; background: none; margin-bottom: 4px; }
+        @media (max-width: 640px) {
+            .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate { padding: 0.75rem 1rem; }
+        }
     </style>
 </head>
 
@@ -200,7 +210,7 @@
                     </button>
 
                     <div id="notifications-menu"
-                        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 z-50 overflow-hidden transform opacity-0 scale-95 transition-all duration-200 origin-top-right">
+                        class="hidden fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 z-50 overflow-hidden transform opacity-0 scale-95 transition-all duration-200 origin-top-right">
                         <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
                             <h3 class="text-sm font-bold text-slate-800">Notificaciones</h3>
                             @if ($unreadCount > 0)
@@ -279,8 +289,21 @@
     <!-- jQuery, DataTables y SweetAlert2 -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Tablas adaptables: en pantallas chicas se ocultan columnas y se ven con el botón + de la fila.
+        // listHiddenNodes mueve los elementos originales, así los botones de acción siguen funcionando.
+        $.extend(true, $.fn.dataTable.defaults, {
+            responsive: { details: { renderer: $.fn.dataTable.Responsive.renderer.listHiddenNodes() } },
+        });
+        // La primera columna es la última en ocultarse y la de acciones siempre se muestra.
+        document.querySelectorAll('main table thead tr').forEach((row) => {
+            row.firstElementChild?.setAttribute('data-priority', '1');
+            const last = row.lastElementChild;
+            if (row.children.length > 1 && /acci/i.test(last?.textContent ?? '')) last.classList.add('all');
+        });
+
         // Funciones comunes de los mantenedores
 
         // Abre y cierra los modales del componente form-modal.
@@ -403,10 +426,12 @@
     @if(session('success') || session('status'))
     <script>
         Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'success',
-            title: '¡Éxito!',
-            text: @js(session('success') ?? session('status')),
-            timer: 3000,
+            title: @js(session('success') ?? session('status')),
+            timer: 2500,
+            timerProgressBar: true,
             showConfirmButton: false
         });
     </script>

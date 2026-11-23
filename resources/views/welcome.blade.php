@@ -13,41 +13,41 @@
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between font-[Roboto]">
 
     <header class="bg-white border-b border-gray-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/UCSC%2C_Universidad_Cat%C3%B3lica_de_la_Sant%C3%ADsima_Concepci%C3%B3n.png"
-                    alt="Logo UCSC" class="h-12 object-contain">
+                    alt="Logo UCSC" class="h-10 sm:h-12 shrink-0 object-contain">
                 <div>
-                    <span class="font-bold text-gray-900 block text-lg">Prácticas Intermedias</span>
-                    <span class="text-xs text-gray-500">Ingeniería de Ejecución en Informática</span>
+                    <span class="font-bold text-gray-900 block text-base sm:text-lg leading-tight">Prácticas Intermedias</span>
+                    <span class="text-xs text-gray-500 block leading-tight">Ingeniería de Ejecución en Informática</span>
                 </div>
             </div>
-            <div class="text-sm font-medium text-gray-500">
+            <div class="hidden md:block text-sm font-medium text-gray-500 text-right">
                 Universidad Católica de la Santísima Concepción
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="text-center max-w-3xl mx-auto mb-16">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
             <span class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Gestión y Empleabilidad</span>
-            <h1 class="text-4xl font-extrabold text-gray-900 mt-4 mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-4 mb-6">
                 Conectando el talento académico con el sector productivo
             </h1>
-            <p class="text-lg text-gray-600 mb-8">
+            <p class="text-base sm:text-lg text-gray-600 mb-8">
                 Plataforma centralizada para administrar empresas, carreras, ofertas de práctica y postulaciones en línea.
             </p>
-            <div class="flex justify-center space-x-4">
-                <a href="{{ route('register') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg shadow transition-colors text-base">
+            <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                <a href="{{ route('register') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg shadow transition-colors text-base text-center">
                     Comenzar Ahora (Registrarse)
                 </a>
-                <a href="{{ route('login') }}" class="bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 font-bold px-6 py-3 rounded-lg transition-colors text-base">
+                <a href="{{ route('login') }}" class="bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 font-bold px-6 py-3 rounded-lg transition-colors text-base text-center">
                     Iniciar Sesión
                 </a>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mt-8 md:mt-12">
             <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                 <div class="w-12 h-12 bg-red-50 text-red-600 rounded-lg flex items-center justify-center text-xl mb-4 font-bold">
                     <i class="bi bi-building"></i>

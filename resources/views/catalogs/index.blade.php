@@ -43,7 +43,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table id="catalogTable" class="w-full min-w-[860px] text-left text-[13px] text-slate-600">
+                <table id="catalogTable" class="w-full lg:min-w-[860px] text-left text-[13px] text-slate-600">
                     <thead class="bg-gray-50/60 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                         <tr>
                             <th class="px-6 py-3.5">ID</th>
